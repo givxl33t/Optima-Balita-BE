@@ -1,0 +1,7 @@
+.env
+package-lock.json
+node_modules/
+dist/
+yarn.lock
+be-kg-app-server.pem
+
