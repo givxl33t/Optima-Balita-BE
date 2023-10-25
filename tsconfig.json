@@ -8,56 +8,30 @@
     "baseUrl": "./src",
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@/*": [
-        "*"
-      ],
-      "@api/*": [
-        "api/*"
-      ],
-      "@config/*": [
-        "config/*"
-      ],
-      "@interfaces/*": [
-        "interfaces/*"
-      ],
-      "@middlewares/*": [
-        "middlewares/*"
-      ],
-      "@utils/*": [
-        "utils/*"
-      ],
-      "@services/*": [
-        "services/*"
-      ],
-      "@dtos/*": [
-        "dtos/*"
-      ],
-      "@exceptions/*": [
-        "exceptions/*"
-      ],
-      "@tests/*": [
-        "tests/*"
-      ],
-      "@helpers/*": [
-        "helpers/*"
-      ]
+      "@/*": ["*"],
+      "@api/*": ["api/*"],
+      "@config/*": ["config/*"],
+      "@interfaces/*": ["interfaces/*"],
+      "@middlewares/*": ["middlewares/*"],
+      "@utils/*": ["utils/*"],
+      "@services/*": ["services/*"],
+      "@dtos/*": ["dtos/*"],
+      "@exceptions/*": ["exceptions/*"],
+      "@tests/*": ["tests/*"],
+      "@helpers/*": ["helpers/*"]
     },
     "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "outDir": "./dist",
     "noEmit": false,
-    // "isolatedModules": true,
+    "sourceMap": true,
     "esModuleInterop": true,
     "strict": true,
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
     "noImplicitAny": false
   },
-  "include": [
-    "src/**/*",
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*.ts", "src/config/dbconfig.js", "src/config/dbconfig.js"],
+  "exclude": ["node_modules", "dist"]
 }

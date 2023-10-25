@@ -2,13 +2,13 @@ import { Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import { Routes } from "@interfaces/routes.interface";
+import { RouteInterface } from "@interfaces/routes.interface";
 
-import db from "@config/database";
+import DB from "@config/database";
 import errorMiddleware from "@middlewares/error.middleware";
 import limiterMiddleware from "./middlewares/limiter.middleware";
 import { StatusCodes as status } from "http-status-codes";
-import { PORT, NODE_ENV } from "@utils/constant";
+import { PORT, NODE_ENV } from "@/utils/constant.utils";
 import { apiResponse } from "@utils/apiResponse.utils";
 
 class App {
@@ -16,7 +16,7 @@ class App {
   public port: string | number;
   public env: string;
 
-  constructor(routes: Routes[]) {
+  constructor(routes: RouteInterface[]) {
     this.app = express();
     this.port = PORT || 3000;
     this.env = NODE_ENV || "development";
@@ -39,7 +39,7 @@ class App {
   }
 
   private connectToDB(): void {
-    db.sequelize.sync({ force: false, alter: true });
+    DB.sequelize.sync({ force: false, alter: true });
   }
 
   private initializeMiddlewares(): void {
@@ -50,7 +50,7 @@ class App {
     this.app.use(limiterMiddleware);
   }
 
-  private initializeRoutes(routes: Routes[]): void {
+  private initializeRoutes(routes: RouteInterface[]): void {
     routes.forEach((route) => {
       this.app.use("/api/", route.router);
     });

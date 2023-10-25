@@ -8,7 +8,7 @@ const errorMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): Promise<Response<unknown, Record<string, unknown>> | undefined> => {
+): Promise<Response | undefined> => {
   try {
     console.log("error.parent: ", error.parent);
     console.log("error: ", error);

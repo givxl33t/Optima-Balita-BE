@@ -3,11 +3,15 @@
 require("dotenv").config();
 
 const {
-  POSTGRES_USER,
   POSTGRES_PASSWORD,
   POSTGRES_DB,
-  POSTGRES_DB_TEST,
   POSTGRES_HOST,
+
+  POSTGRES_PASSWORD_TEST,
+  POSTGRES_DB_TEST,
+  POSTGRES_HOST_TEST,
+
+  POSTGRES_USER,
   POSTGRES_PORT,
 } = process.env;
 
@@ -42,9 +46,10 @@ module.exports = {
   },
   test: {
     username: POSTGRES_USER,
-    password: POSTGRES_PASSWORD,
+    password: POSTGRES_PASSWORD_TEST,
     database: POSTGRES_DB_TEST,
-    host: POSTGRES_HOST,
+    host: POSTGRES_HOST_TEST,
+    port: POSTGRES_PORT,
     dialect: "postgres",
     operatorsAliases: 0,
     dialectOptions: {
@@ -72,6 +77,7 @@ module.exports = {
     password: POSTGRES_PASSWORD,
     database: POSTGRES_DB,
     host: POSTGRES_HOST,
+    port: POSTGRES_PORT,
     dialect: "postgres",
     operatorsAliases: 0,
     dialectOptions: {

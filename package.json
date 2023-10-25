@@ -7,7 +7,7 @@
     "dev": "cross-env NODE_ENV=development nodemon",
     "start": "node dist/server",
     "sq:cms": "sequelize db:migrate:undo:all && sequelize db:migrate && sequelize db:seed:all",
-    "test": "jest --forceExit --detectOpenHandles",
+    "test": "jest --forceExit",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint --fix src/**/*.ts",
     "format": "prettier --write src/**/*.ts --config ./.prettierrc",

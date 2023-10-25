@@ -1,6 +1,9 @@
-import { NODE_ENV } from "@utils/constant";
+import { NODE_ENV } from "@/utils/constant.utils";
 import config from "@/config/dbconfig";
 import { Sequelize } from "sequelize";
+import UserModel from "@api/auth/user.model";
+import RoleModel from "@api/auth/role.model";
+import UserRoleModel from "@api/auth/user_role.model";
 
 const dbConfig = config[NODE_ENV || "development"];
 const sequelize = new Sequelize(
@@ -19,9 +22,23 @@ sequelize
     console.error("Unable to connect to the database:", error);
   });
 
-const db = {
+const models = {
+  UserModel: UserModel(sequelize),
+  RoleModel: RoleModel(sequelize),
+  UserRoleModel: UserRoleModel(sequelize),
+};
+
+const DB = {
+  ...models,
   sequelize,
   Sequelize,
 };
 
-export default db;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+Object.values(DB).forEach((model: any) => {
+  if (model.associate) {
+    model.associate(DB);
+  }
+});
+
+export default DB;
