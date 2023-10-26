@@ -2,6 +2,7 @@
 package-lock.json
 node_modules/
 dist/
+coverage/
 yarn.lock
 be-kg-app-server.pem
 
