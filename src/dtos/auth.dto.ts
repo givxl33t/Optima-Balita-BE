@@ -34,3 +34,22 @@ export class RegisterUserDto {
   @IsStrongPassword(strongPasswordOptions)
   public password: string;
 }
+
+export class LoginUserDto {
+  @IsEmail()
+  @IsString()
+  @IsNotEmpty({ message: "Email Required" })
+  @MaxLength(255)
+  public email: string;
+
+  @IsString()
+  @IsNotEmpty({ message: "Password Required" })
+  @MaxLength(25)
+  public password: string;
+}
+
+export class TokenManageDto {
+  @IsString()
+  @IsNotEmpty({ message: "Refresh Token Required" })
+  public refreshToken: string;
+}

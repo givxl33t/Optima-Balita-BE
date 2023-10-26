@@ -32,6 +32,6 @@
     "skipLibCheck": true,
     "noImplicitAny": false
   },
-  "include": ["src/**/*.ts", "src/config/dbconfig.js", "src/config/dbconfig.js"],
+  "include": ["src/**/*.ts", "src/config/dbconfig.js"],
   "exclude": ["node_modules", "dist"]
 }

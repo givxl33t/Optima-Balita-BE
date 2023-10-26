@@ -4,6 +4,7 @@ import { Sequelize } from "sequelize";
 import UserModel from "@api/auth/user.model";
 import RoleModel from "@api/auth/role.model";
 import UserRoleModel from "@api/auth/user_role.model";
+import AuthModel from "@/api/auth/auth.model";
 
 const dbConfig = config[NODE_ENV || "development"];
 const sequelize = new Sequelize(
@@ -24,6 +25,7 @@ sequelize
 
 const models = {
   UserModel: UserModel(sequelize),
+  AuthModel: AuthModel(sequelize),
   RoleModel: RoleModel(sequelize),
   UserRoleModel: UserRoleModel(sequelize),
 };

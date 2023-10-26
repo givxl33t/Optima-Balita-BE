@@ -46,7 +46,7 @@ class App {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
-    this.app.use(cors());
+    this.app.use(cors({ origin: "*", credentials: true }));
     this.app.use(limiterMiddleware);
   }
 

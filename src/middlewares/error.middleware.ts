@@ -10,9 +10,6 @@ const errorMiddleware = async (
   next: NextFunction,
 ): Promise<Response | undefined> => {
   try {
-    console.log("error.parent: ", error.parent);
-    console.log("error: ", error);
-
     // Sequelize error handler
     if (error?.parent?.code) {
       switch (error.parent.code) {

@@ -1,4 +1,5 @@
 import { Sequelize, DataTypes, Model, CreationOptional } from "sequelize";
+import { RoleModel } from "./role.model";
 
 export class UserModel extends Model {
   public id!: CreationOptional<string>;
@@ -6,6 +7,8 @@ export class UserModel extends Model {
   public email: string;
   public password: string;
   public profile: string;
+
+  public readonly roles: RoleModel[];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static associate(models: any): void {
