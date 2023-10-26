@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: 
       - main
+      - staging
 
 jobs:
   test:
@@ -13,9 +14,9 @@ jobs:
       postgres:
         image: postgres:14-alpine
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: supersecretpassword
-          POSTGRES_DB: optimabalita_test
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER_CI }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_CI }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB_CI }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -35,28 +36,30 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
-        run: npm install
+        run: yarn install
       - name: Migrate database
         run: yarn db:refresh:test
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD_TEST: supersecretpassword
-          POSTGRES_DB_TEST: optimabalita_test
-          POSTGRES_HOST_TEST: localhost
-          POSTGRES_PORT_TEST: 5432
-          ADMIN_ID: a1582ba5-d764-4a15-b181-657e8753869b
-          DOCTOR_ID: 9c4e9a57-12da-4dae-b2e0-edec77c4f86e
-          GUEST_ID: 8cb07c50-0735-4df8-8e51-8f15c3fb3a5d
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER_CI }}
+          POSTGRES_PASSWORD_TEST: ${{ secrets.POSTGRES_PASSWORD_CI }}
+          POSTGRES_DB_TEST: ${{ secrets.POSTGRES_DB_CI }}
+          POSTGRES_HOST_TEST: ${{ secrets.POSTGRES_HOST_CI }}
+          POSTGRES_PORT_TEST: ${{ secrets.POSTGRES_PORT_CI }}
+          ADMIN_ID: ${{ secrets.ADMIN_ID }}
+          DOCTOR_ID: ${{ secrets.DOCTOR_ID }}
+          GUEST_ID: ${{ secrets.GUEST_ID }}
       - name: Run tests
-        run: yarn test
+        run: yarn test:coverage
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD_TEST: supersecretpassword
-          POSTGRES_DB_TEST: optimabalita_test
-          POSTGRES_HOST_TEST: localhost
-          POSTGRES_PORT_TEST: 5432
-          JWT_SECRET_KEY: secret1
-          JWT_SECRET_KEY_REFRESH: secret2
-          ADMIN_ID: a1582ba5-d764-4a15-b181-657e8753869b
-          DOCTOR_ID: 9c4e9a57-12da-4dae-b2e0-edec77c4f86e
-          GUEST_ID: 8cb07c50-0735-4df8-8e51-8f15c3fb3a5d
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER_CI }}
+          POSTGRES_PASSWORD_TEST: ${{ secrets.POSTGRES_PASSWORD_CI }}
+          POSTGRES_DB_TEST: ${{ secrets.POSTGRES_DB_CI }}
+          POSTGRES_HOST_TEST: ${{ secrets.POSTGRES_HOST_CI }}
+          POSTGRES_PORT_TEST: ${{ secrets.POSTGRES_PORT_CI }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          JWT_SECRET_KEY_REFRESH: ${{ secrets.JWT_SECRET_KEY_REFRESH }}
+          ADMIN_ID: ${{ secrets.ADMIN_ID }}
+          DOCTOR_ID: ${{ secrets.DOCTOR_ID }}
+          GUEST_ID: ${{ secrets.GUEST_ID }}
+      - name: Static code analysis
+        run: yarn lint
