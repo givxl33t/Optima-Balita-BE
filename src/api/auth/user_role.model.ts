@@ -16,11 +16,11 @@ export default function (sequelize: Sequelize): typeof UserRoleModel {
       },
       user_id: {
         type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
       },
       role_id: {
         type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
       },
     },
     {
