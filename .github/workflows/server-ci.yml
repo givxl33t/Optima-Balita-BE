@@ -65,6 +65,6 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Code coverage
-          path: ../../coverage
+          path: coverage
       - name: Static code analysis
         run: yarn lint
