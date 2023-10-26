@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Migrate database
-        run: npm run db:refresh:test
+        run: yarn db:refresh:test
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD_TEST: supersecretpassword
@@ -48,7 +48,7 @@ jobs:
           DOCTOR_ID: 9c4e9a57-12da-4dae-b2e0-edec77c4f86e
           GUEST_ID: 8cb07c50-0735-4df8-8e51-8f15c3fb3a5d
       - name: Run tests
-        run: npm run test
+        run: yarn test
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD_TEST: supersecretpassword
