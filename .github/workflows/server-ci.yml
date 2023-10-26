@@ -48,8 +48,10 @@ jobs:
           ADMIN_ID: ${{ secrets.ADMIN_ID }}
           DOCTOR_ID: ${{ secrets.DOCTOR_ID }}
           GUEST_ID: ${{ secrets.GUEST_ID }}
-      - name: Run tests
-        run: yarn test
+      - name: Run tests with coverage
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          test-script: yarn test:coverage
         env:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER_CI }}
           POSTGRES_PASSWORD_TEST: ${{ secrets.POSTGRES_PASSWORD_CI }}
@@ -61,10 +63,5 @@ jobs:
           ADMIN_ID: ${{ secrets.ADMIN_ID }}
           DOCTOR_ID: ${{ secrets.DOCTOR_ID }}
           GUEST_ID: ${{ secrets.GUEST_ID }}
-      - name: Upload coverage
-        uses: actions/upload-artifact@v3
-        with:
-          name: Code coverage
-          path: coverage
       - name: Static code analysis
         run: yarn lint
