@@ -30,7 +30,11 @@ class AuthService {
       role_id: GUEST_ID,
     });
 
-    return user;
+    return {
+      username: user.username,
+      email: user.email,
+      profile: user.profile,
+    };
   };
 
   public login = async (userData: LoginUserDto): Promise<TokenInterface> => {
