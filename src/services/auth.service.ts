@@ -115,6 +115,19 @@ class AuthService {
       where: { token: tokenData.refreshToken },
     });
   };
+
+  public me = async (user_id: number): Promise<UserInterface> => {
+    const findUser = await this.users.findOne({
+      where: { id: user_id },
+    });
+    if (!findUser) throw new HttpExceptionBadRequest("User not found");
+
+    return {
+      username: findUser.username,
+      email: findUser.email,
+      profile: findUser.profile,
+    };
+  };
 }
 
 export default AuthService;

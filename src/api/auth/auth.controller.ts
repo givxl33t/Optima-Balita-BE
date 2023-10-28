@@ -4,6 +4,7 @@ import AuthService from "@/services/auth.service";
 import { RegisterUserDto, LoginUserDto, TokenManageDto } from "@/dtos/auth.dto";
 import { StatusCodes as status } from "http-status-codes";
 import { apiResponse } from "@/utils/apiResponse.utils";
+import { AuthenticateRequest } from "@/interfaces/request.interface";
 
 class AuthController {
   public authService = new AuthService();
@@ -33,6 +34,14 @@ class AuthController {
     await this.authService.logout(tokenData);
     res.status(status.OK).json(apiResponse(status.OK, "OK", "User successfully logged out"));
   });
+
+  public me = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const tokenPayload = req.user;
+      const user = await this.authService.me(tokenPayload?.user_id);
+      res.status(status.OK).json(apiResponse(status.OK, "OK", "User successfully found", user));
+    },
+  );
 }
 
 export default AuthController;
