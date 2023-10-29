@@ -1,4 +1,4 @@
-export interface PaginationInterface {
+export interface MetaInterface {
   page: number;
   per_page: number;
   page_size: number;

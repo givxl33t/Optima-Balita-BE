@@ -8,6 +8,10 @@ export class UserModel extends Model {
   public password: string;
   public profile: string;
 
+  public readonly created_at!: Date;
+  public readonly updated_at!: Date;
+  public readonly deleted_at!: Date;
+
   public readonly roles: RoleModel[];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

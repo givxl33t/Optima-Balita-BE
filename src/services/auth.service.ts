@@ -116,7 +116,7 @@ class AuthService {
     });
   };
 
-  public me = async (user_id: number): Promise<UserInterface> => {
+  public getUserById = async (user_id: string): Promise<UserInterface> => {
     const findUser = await this.users.findOne({
       where: { id: user_id },
     });
