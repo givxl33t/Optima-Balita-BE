@@ -38,7 +38,7 @@ class AuthController {
   public me = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
       const tokenPayload = req.user;
-      const user = await this.authService.me(tokenPayload?.user_id);
+      const user = await this.authService.getUserById(tokenPayload?.user_id);
       res.status(status.OK).json(apiResponse(status.OK, "OK", "User successfully found", user));
     },
   );
