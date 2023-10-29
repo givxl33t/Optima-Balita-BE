@@ -33,6 +33,16 @@ class ArticleService {
 
     if (!isNaN(offset) && !isNaN(limit)) {
       articles = await this.articles.findAndCountAll({
+        attributes: [
+          "id",
+          "slug",
+          "title",
+          "description",
+          "content",
+          "image",
+          "author_id",
+          "created_at",
+        ],
         include: [
           {
             model: this.users,
