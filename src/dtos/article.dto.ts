@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { IsString, MaxLength, IsNotEmpty, IsOptional, IsIn, Equals } from "class-validator";
+import { IsString, MaxLength, IsNotEmpty, IsOptional, IsIn, Equals, IsUUID } from "class-validator";
 import { PaginationDto } from "./pagination.dto";
 
 export enum ArticleQuerySortOptions {
@@ -30,4 +30,21 @@ export class CreateArticleDto {
   @IsOptional()
   @Equals(undefined, { message: "Image Required" })
   public image?: string;
+}
+
+export class ArticleIdParamDto {
+  @IsUUID("4", { message: "Invalid Article ID" })
+  @IsNotEmpty({ message: "Article ID Required" })
+  public articleId: string;
+}
+
+export class UpdateArticleDto extends CreateArticleDto {
+  @IsOptional()
+  public title: string;
+
+  @IsOptional()
+  public description: string;
+
+  @IsOptional()
+  public content: string;
 }
