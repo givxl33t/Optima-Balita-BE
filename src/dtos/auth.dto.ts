@@ -1,4 +1,11 @@
-import { IsString, IsEmail, MaxLength, IsStrongPassword, IsNotEmpty } from "class-validator";
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  MaxLength,
+  IsStrongPassword,
+  IsNotEmpty,
+} from "class-validator";
 
 type IsStrongPasswordOptions = {
   minLength: number;
@@ -46,6 +53,21 @@ export class LoginUserDto {
   @IsNotEmpty({ message: "Password Required" })
   @MaxLength(25)
   public password: string;
+}
+
+export class UpdateUserDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: "Username Required" })
+  @MaxLength(255)
+  public username: string;
+
+  @IsOptional()
+  @IsEmail()
+  @IsString()
+  @IsNotEmpty({ message: "Email Required" })
+  @MaxLength(255)
+  public email: string;
 }
 
 export class TokenManageDto {
