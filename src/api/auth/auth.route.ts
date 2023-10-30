@@ -2,7 +2,7 @@ import { Router } from "express";
 import AuthController from "@/api/auth/auth.controller";
 import validationMiddleware from "@/middlewares/validation.middleware";
 import { RouteInterface } from "@/interfaces/routes.interface";
-import { RegisterUserDto, LoginUserDto, TokenManageDto } from "@/dtos/auth.dto";
+import { RegisterUserDto, LoginUserDto, TokenManageDto, UpdateUserDto } from "@/dtos/auth.dto";
 import { authenticate } from "@/middlewares/authentication.middleware";
 
 class AuthRoute implements RouteInterface {
@@ -20,26 +20,28 @@ class AuthRoute implements RouteInterface {
       validationMiddleware(RegisterUserDto, "body"),
       this.authController.register,
     );
-
     this.router.post(
       `${this.path}/login`,
       validationMiddleware(LoginUserDto, "body"),
       this.authController.login,
     );
-
     this.router.put(
       `${this.path}/refresh`,
       validationMiddleware(TokenManageDto, "body"),
       this.authController.refresh,
     );
-
     this.router.delete(
       `${this.path}/logout`,
       validationMiddleware(TokenManageDto, "body"),
       this.authController.logout,
     );
-
     this.router.get(`${this.path}/me`, authenticate, this.authController.me);
+    this.router.put(
+      `${this.path}/profile`,
+      authenticate,
+      validationMiddleware(UpdateUserDto, "body"),
+      this.authController.updateProfile,
+    );
   }
 }
 
