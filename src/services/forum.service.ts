@@ -17,6 +17,7 @@ class ForumService {
   public discussions = DB.DiscussionModel;
   public comments = DB.CommentModel;
   public users = DB.UserModel;
+  public roles = DB.RoleModel;
   public userDiscussionLikes = DB.UserDiscussionLikeModel;
 
   public getDiscussions = async (
@@ -37,6 +38,13 @@ class ForumService {
                 model: this.users,
                 as: "commenter",
                 attributes: ["id", "username", "profile"],
+                include: [
+                  {
+                    model: this.roles,
+                    as: "roles",
+                    attributes: ["name"],
+                  },
+                ],
               },
             ],
           },
@@ -44,6 +52,13 @@ class ForumService {
             model: this.users,
             as: "poster",
             attributes: ["id", "username", "profile"],
+            include: [
+              {
+                model: this.roles,
+                as: "roles",
+                attributes: ["name"],
+              },
+            ],
           },
           {
             model: this.users,
@@ -63,6 +78,13 @@ class ForumService {
             model: this.users,
             as: "poster",
             attributes: ["id", "username", "profile"],
+            include: [
+              {
+                model: this.roles,
+                as: "roles",
+                attributes: ["name"],
+              },
+            ],
           },
           {
             model: this.users,
@@ -94,6 +116,13 @@ class ForumService {
               model: this.users,
               as: "commenter",
               attributes: ["id", "username", "profile"],
+              include: [
+                {
+                  model: this.roles,
+                  as: "roles",
+                  attributes: ["name"],
+                },
+              ],
             },
           ],
         },
@@ -101,6 +130,13 @@ class ForumService {
           model: this.users,
           as: "poster",
           attributes: ["id", "username", "profile"],
+          include: [
+            {
+              model: this.roles,
+              as: "roles",
+              attributes: ["name"],
+            },
+          ],
         },
         {
           model: this.users,
@@ -217,16 +253,19 @@ class ForumService {
       const like_count = discussion.likes.length;
       const poster_username = discussion.poster.username;
       const poster_profile = discussion.poster.profile;
+      const poster_role = discussion.poster.roles[0].name;
       if (discussion.comments) {
         const mappedComments: MappedCommentInterface[] = discussion.comments.map((comment) => {
           const commenter_username = comment.commenter.username;
           const commenter_profile = comment.commenter.profile;
+          const commenter_role = comment.commenter.roles[0].name;
           return {
             id: comment.id,
             comment_content: comment.comment_content,
             commenter_id: comment.commenter_id,
             commenter_username,
             commenter_profile,
+            commenter_role,
             discussion_id: comment.discussion_id,
             created_at: comment.created_at,
           };
@@ -239,6 +278,7 @@ class ForumService {
           poster_id: discussion.poster_id,
           poster_username,
           poster_profile,
+          poster_role,
           like_count,
           is_liked,
           comments: mappedComments,
@@ -253,6 +293,7 @@ class ForumService {
         poster_id: discussion.poster_id,
         poster_username,
         poster_profile,
+        poster_role,
         like_count,
         is_liked,
         created_at: discussion.created_at,

@@ -570,7 +570,6 @@ describe("forum endpoint", () => {
         .set("Authorization", `Bearer ${accessToken}`)
         .send(commentData)
         .expect(400);
-      console.log(res.body);
       expect(res.body.message).toEqual("Comment not found.");
     });
 
