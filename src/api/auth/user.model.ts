@@ -21,6 +21,11 @@ export class UserModel extends Model {
       foreignKey: "user_id",
       as: "roles",
     });
+    UserModel.belongsToMany(models.DiscussionModel, {
+      through: models.UserDiscussionLikeModel,
+      foreignKey: "user_id",
+      as: "likers",
+    });
   }
 }
 
