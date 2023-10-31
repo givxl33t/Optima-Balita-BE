@@ -4,9 +4,12 @@ import { RouteInterface } from "@/interfaces/routes.interface";
 import { authenticate } from "@/middlewares/authentication.middleware";
 import {
   CreateCommentDto,
+  UpdateCommentDto,
   CreateDiscussionDto,
+  UpdateDiscussionDto,
   GetDiscussionsQueryDto,
   DiscussionIdParamDto,
+  CommentIdParamDto,
 } from "@/dtos/forum.dto";
 import validationMiddleware from "@/middlewares/validation.middleware";
 
@@ -38,12 +41,38 @@ class ForumRoute implements RouteInterface {
       validationMiddleware(CreateDiscussionDto, "body"),
       this.forumController.createDiscussion,
     );
+    this.router.put(
+      `${this.path}/:discussionId`,
+      authenticate,
+      validationMiddleware(DiscussionIdParamDto, "params"),
+      validationMiddleware(UpdateDiscussionDto, "body"),
+      this.forumController.updateDiscussion,
+    );
+    this.router.delete(
+      `${this.path}/:discussionId`,
+      authenticate,
+      validationMiddleware(DiscussionIdParamDto, "params"),
+      this.forumController.deleteDiscussion,
+    );
     this.router.post(
       `${this.path}/:discussionId/comment`,
       authenticate,
       validationMiddleware(DiscussionIdParamDto, "params"),
       validationMiddleware(CreateCommentDto, "body"),
       this.forumController.createComment,
+    );
+    this.router.put(
+      `${this.path}/comment/:commentId`,
+      authenticate,
+      validationMiddleware(CommentIdParamDto, "params"),
+      validationMiddleware(UpdateCommentDto, "body"),
+      this.forumController.updateComment,
+    );
+    this.router.delete(
+      `${this.path}/comment/:commentId`,
+      authenticate,
+      validationMiddleware(CommentIdParamDto, "params"),
+      this.forumController.deleteComment,
     );
     this.router.post(
       `${this.path}/:discussionId/like`,
