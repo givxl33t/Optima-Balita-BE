@@ -5,8 +5,13 @@ import {
   MappedCommentInterface,
   MappedDiscussionInterface,
 } from "@/interfaces/forum.interface";
-import { CreateCommentDto, CreateDiscussionDto } from "@/dtos/forum.dto";
-import { HttpExceptionBadRequest } from "@/exceptions/HttpException";
+import {
+  CreateCommentDto,
+  CreateDiscussionDto,
+  UpdateDiscussionDto,
+  UpdateCommentDto,
+} from "@/dtos/forum.dto";
+import { HttpExceptionBadRequest, HttpExceptionForbidden } from "@/exceptions/HttpException";
 
 class ForumService {
   public discussions = DB.DiscussionModel;
@@ -122,6 +127,30 @@ class ForumService {
     return discussion;
   };
 
+  public updateDiscussion = async (
+    discussionId: string,
+    discussionData: UpdateDiscussionDto,
+    posterId: string,
+  ): Promise<void> => {
+    const existingDiscussion = await this.discussions.findByPk(discussionId);
+    if (!existingDiscussion) throw new HttpExceptionBadRequest("Discussion not found.");
+
+    if (existingDiscussion.poster_id !== posterId)
+      throw new HttpExceptionForbidden("You are not the poster.");
+
+    await this.discussions.update(discussionData, { where: { id: discussionId } });
+  };
+
+  public deleteDiscussion = async (discussionId: string, posterId: string): Promise<void> => {
+    const existingDiscussion = await this.discussions.findByPk(discussionId);
+    if (!existingDiscussion) throw new HttpExceptionBadRequest("Discussion not found.");
+
+    if (existingDiscussion.poster_id !== posterId)
+      throw new HttpExceptionForbidden("You are not the poster.");
+
+    await this.discussions.destroy({ where: { id: discussionId } });
+  };
+
   public createComment = async (
     commentData: CreateCommentDto,
     discussionId: string,
@@ -136,6 +165,30 @@ class ForumService {
       discussion_id: discussionId,
     });
     return comment;
+  };
+
+  public updateComment = async (
+    commentId: string,
+    commentData: UpdateCommentDto,
+    commenterId: string,
+  ): Promise<void> => {
+    const existingComment = await this.comments.findByPk(commentId);
+    if (!existingComment) throw new HttpExceptionBadRequest("Comment not found.");
+
+    if (existingComment.commenter_id !== commenterId)
+      throw new HttpExceptionForbidden("You are not the commenter.");
+
+    await this.comments.update(commentData, { where: { id: commentId } });
+  };
+
+  public deleteComment = async (commentId: string, commenterId: string): Promise<void> => {
+    const existingComment = await this.comments.findByPk(commentId);
+    if (!existingComment) throw new HttpExceptionBadRequest("Comment not found.");
+
+    if (existingComment.commenter_id !== commenterId)
+      throw new HttpExceptionForbidden("You are not the commenter.");
+
+    await this.comments.destroy({ where: { id: commentId } });
   };
 
   public likeDiscussion = async (discussionId: string, userId: string): Promise<boolean> => {

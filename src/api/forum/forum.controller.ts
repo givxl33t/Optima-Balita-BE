@@ -51,6 +51,25 @@ class ForumController {
     },
   );
 
+  public updateDiscussion = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const discussionId = req.params.discussionId;
+      const discussionData = req.body;
+      const posterId = req.user?.user_id;
+      await this.forumService.updateDiscussion(discussionId, discussionData, posterId);
+      res.status(status.OK).json(apiResponse(status.OK, "OK", "Discussion successfully updated"));
+    },
+  );
+
+  public deleteDiscussion = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const discussionId = req.params.discussionId;
+      const posterId = req.user?.user_id;
+      await this.forumService.deleteDiscussion(discussionId, posterId);
+      res.status(status.OK).json(apiResponse(status.OK, "OK", "Discussion successfully deleted"));
+    },
+  );
+
   public createComment = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
       const commentData = req.body;
@@ -66,6 +85,25 @@ class ForumController {
         .json(
           apiResponse(status.CREATED, "CREATED", "Comment successfully created", createdComment),
         );
+    },
+  );
+
+  public updateComment = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const commentId = req.params.commentId;
+      const commentData = req.body;
+      const commenterId = req.user?.user_id;
+      await this.forumService.updateComment(commentId, commentData, commenterId);
+      res.status(status.OK).json(apiResponse(status.OK, "OK", "Comment successfully updated"));
+    },
+  );
+
+  public deleteComment = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const commentId = req.params.commentId;
+      const commenterId = req.user?.user_id;
+      await this.forumService.deleteComment(commentId, commenterId);
+      res.status(status.OK).json(apiResponse(status.OK, "OK", "Comment successfully deleted"));
     },
   );
 
