@@ -6,7 +6,7 @@ on:
       - staging
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,12 +19,15 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push image to Docker Hub Registry
         run: docker push ${{ secrets.DOCKER_USERNAME }}/optimabalita-server
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+      - name: Setup gcloud CLI
+        id: 'auth'
+        uses: 'google-github-actions/auth@v0'
         with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save optimabalita-staging
+          credentials_json: '${{ secrets.GKE_SA_KEY }}'
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v0
+        with:
+          cluster_name: optimabalita-stage
+          location: asia-southeast1-a
       - name: Restart Deployment
         run: kubectl rollout restart deployment optimabalita-server-depl
-
