@@ -23,6 +23,7 @@ class App {
 
     this.connectToDB();
     this.initializeMiddlewares();
+    this.initializeHealthCheck();
     this.initializeRoutes(routes);
     this.initializeErrorHandling();
     this.initializeNotFound();
@@ -53,6 +54,12 @@ class App {
   private initializeRoutes(routes: RouteInterface[]): void {
     routes.forEach((route) => {
       this.app.use("/api/", route.router);
+    });
+  }
+
+  private initializeHealthCheck(): void {
+    this.app.get("/", (req: Request, res: Response) => {
+      return res.status(status.OK).json(apiResponse(status.OK, "OK", "Health Check Passed"));
     });
   }
 
