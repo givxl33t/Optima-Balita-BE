@@ -24,81 +24,52 @@ class ForumService {
     userId: string,
     commentOption?: string,
   ): Promise<MappedDiscussionInterface[]> => {
-    let discussions;
-    if (commentOption === "WITHCOMMENT") {
-      discussions = await this.discussions.findAll({
-        attributes: ["id", "title", "post_content", "poster_id", "created_at"],
-        include: [
-          {
-            model: this.comments,
-            as: "comments",
-            attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
-            include: [
-              {
-                model: this.users,
-                as: "commenter",
-                attributes: ["id", "username", "profile"],
-                include: [
-                  {
-                    model: this.roles,
-                    as: "roles",
-                    attributes: ["name"],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            model: this.users,
-            as: "poster",
-            attributes: ["id", "username", "profile"],
-            include: [
-              {
-                model: this.roles,
-                as: "roles",
-                attributes: ["name"],
-              },
-            ],
-          },
-          {
-            model: this.users,
-            through: {
-              attributes: [],
+    const discussions = await this.discussions.findAll({
+      attributes: ["id", "title", "post_content", "poster_id", "created_at"],
+      include: [
+        {
+          model: this.comments,
+          as: "comments",
+          attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
+          include: [
+            {
+              model: this.users,
+              as: "commenter",
+              attributes: ["id", "username", "profile"],
+              include: [
+                {
+                  model: this.roles,
+                  as: "roles",
+                  attributes: ["name"],
+                },
+              ],
             },
-            as: "likes",
-            attributes: ["id", "username"],
-          },
-        ],
-      });
-    } else {
-      discussions = await this.discussions.findAll({
-        attributes: ["id", "title", "post_content", "poster_id", "created_at"],
-        include: [
-          {
-            model: this.users,
-            as: "poster",
-            attributes: ["id", "username", "profile"],
-            include: [
-              {
-                model: this.roles,
-                as: "roles",
-                attributes: ["name"],
-              },
-            ],
-          },
-          {
-            model: this.users,
-            through: {
-              attributes: [],
+          ],
+        },
+        {
+          model: this.users,
+          as: "poster",
+          attributes: ["id", "username", "profile"],
+          include: [
+            {
+              model: this.roles,
+              as: "roles",
+              attributes: ["name"],
             },
-            as: "likes",
-            attributes: ["id", "username"],
+          ],
+        },
+        {
+          model: this.users,
+          through: {
+            attributes: [],
           },
-        ],
-      });
-    }
+          as: "likes",
+          attributes: ["id", "username"],
+        },
+      ],
+    });
 
-    return this.mappedDiscussions(discussions, userId);
+    return this.mappedDiscussions(discussions, userId, commentOption);
   };
 
   public getDiscussionComments = async (
@@ -151,7 +122,7 @@ class ForumService {
 
     if (!discussion) throw new HttpExceptionBadRequest("Discussion not found.");
 
-    const mappedDiscussion = this.mappedDiscussions([discussion], userId)[0];
+    const mappedDiscussion = this.mappedDiscussions([discussion], userId, "WITHCOMMENT")[0];
     return mappedDiscussion;
   };
 
@@ -247,14 +218,16 @@ class ForumService {
   public mappedDiscussions = (
     discussions: DiscussionInterface[],
     userId: string,
+    commentOption?: string,
   ): MappedDiscussionInterface[] => {
     const mappedDiscussions = discussions.map((discussion) => {
       const is_liked = discussion.likes.some((like) => like.id === userId);
+      const comment_count = discussion.comments ? discussion.comments.length : 0;
       const like_count = discussion.likes.length;
       const poster_username = discussion.poster.username;
       const poster_profile = discussion.poster.profile;
       const poster_role = discussion.poster.roles[0].name;
-      if (discussion.comments) {
+      if (commentOption === "WITHCOMMENT" && discussion.comments) {
         const mappedComments: MappedCommentInterface[] = discussion.comments.map((comment) => {
           const commenter_username = comment.commenter.username;
           const commenter_profile = comment.commenter.profile;
@@ -279,6 +252,7 @@ class ForumService {
           poster_username,
           poster_profile,
           poster_role,
+          comment_count,
           like_count,
           is_liked,
           comments: mappedComments,
@@ -294,6 +268,7 @@ class ForumService {
         poster_username,
         poster_profile,
         poster_role,
+        comment_count,
         like_count,
         is_liked,
         created_at: discussion.created_at,
