@@ -9,6 +9,7 @@ import ArticleModel from "@/api/article/article.model";
 import DiscussionModel from "@/api/forum/discussion.model";
 import UserDiscussionLikeModel from "@/api/forum/userDiscussionLike.model";
 import CommentModel from "@/api/forum/comment.model";
+import NutritionHistoryModel from "@/api/nutrition/nutritionHistory.model";
 
 const dbConfig = config[NODE_ENV || "development"];
 const sequelize = new Sequelize(
@@ -36,6 +37,7 @@ const models = {
   DiscussionModel: DiscussionModel(sequelize),
   UserDiscussionLikeModel: UserDiscussionLikeModel(sequelize),
   CommentModel: CommentModel(sequelize),
+  NutritionHistoryModel: NutritionHistoryModel(sequelize),
 };
 
 const DB = {
