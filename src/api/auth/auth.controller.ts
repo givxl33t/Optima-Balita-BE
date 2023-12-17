@@ -5,6 +5,7 @@ import { RegisterUserDto, LoginUserDto, TokenManageDto, UpdateUserDto } from "@/
 import { StatusCodes as status } from "http-status-codes";
 import { apiResponse } from "@/utils/apiResponse.utils";
 import { AuthenticateRequest } from "@/interfaces/request.interface";
+import { TokenInterface } from "@/interfaces/user.interface";
 
 class AuthController {
   public authService = new AuthService();
