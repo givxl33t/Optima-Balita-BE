@@ -65,4 +65,4 @@ jobs:
           DOCTOR_ID: ${{ secrets.DOCTOR_ID }}
           GUEST_ID: ${{ secrets.GUEST_ID }}
       - name: Static code analysis
-        run: npx eslint . --config .eslintrc.json  --ext .ts
+        run: yarn lint

@@ -16,6 +16,15 @@
   "plugins": [
     "@typescript-eslint"
   ],
+  "ignorePatterns": [
+    "node_modules/",
+    "dist/",
+    "build/",
+    "coverage/",
+    "src/migrations/",
+    "src/seeders/",
+    "src/config/*.js"
+  ],
   "rules": {
     "indent": [
       "error",
