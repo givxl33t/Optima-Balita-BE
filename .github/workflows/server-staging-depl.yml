@@ -6,7 +6,8 @@ on:
       - staging
 
 jobs:
-  build-and-deploy:
+  publish:
+    name: Publish Artifact
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,6 +20,12 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push image to Docker Hub Registry
         run: docker push ${{ secrets.DOCKER_USERNAME }}/optimabalita-server
+
+  deploy:
+    name: Deploy to GKE
+    runs-on: ubuntu-latest
+    needs: publish
+    steps:
       - name: Setup gcloud CLI
         id: 'auth'
         uses: 'google-github-actions/auth@v0'
