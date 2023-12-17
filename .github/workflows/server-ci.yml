@@ -63,4 +63,4 @@ jobs:
           DOCTOR_ID: ${{ secrets.DOCTOR_ID }}
           GUEST_ID: ${{ secrets.GUEST_ID }}
       - name: Static code analysis
-        run: yarn lint
+        run: yarn lint:fix
