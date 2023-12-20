@@ -2,7 +2,7 @@ import DB from "@/config/database";
 import { HttpExceptionBadRequest, HttpExceptionUnauthorize } from "@exceptions/HttpException";
 import PasswordHasher from "@/utils/passwordHasher.utils";
 import { UserInterface, TokenInterface } from "@interfaces/user.interface";
-import { RegisterUserDto, LoginUserDto, TokenManageDto, UpdateUserDto } from "@/dtos/auth.dto";
+import { RegisterUserDto, LoginUserDto, TokenManageDto } from "@/dtos/auth.dto";
 import { GUEST_ID } from "@/utils/constant.utils";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@/utils/jwt.utils";
 import { JwtPayload } from "jsonwebtoken";
@@ -114,33 +114,6 @@ class AuthService {
     await this.auths.destroy({
       where: { token: tokenData.refreshToken },
     });
-  };
-
-  public getUserById = async (user_id: string): Promise<UserInterface> => {
-    const findUser = await this.users.findOne({
-      where: { id: user_id },
-    });
-    if (!findUser) throw new HttpExceptionBadRequest("User not found");
-
-    return {
-      username: findUser.username,
-      email: findUser.email,
-      profile: findUser.profile,
-    };
-  };
-
-  public updateUser = async (userData: UpdateUserDto, userId: string): Promise<void> => {
-    const findUser = await this.users.findOne({
-      where: { id: userId },
-    });
-    if (!findUser) throw new HttpExceptionBadRequest("User not found");
-
-    await this.users.update(
-      { ...userData },
-      {
-        where: { id: userId },
-      },
-    );
   };
 }
 
