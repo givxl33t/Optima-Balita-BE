@@ -2,7 +2,8 @@ import { Router } from "express";
 import AuthController from "@/api/auth/auth.controller";
 import validationMiddleware from "@/middlewares/validation.middleware";
 import { RouteInterface } from "@/interfaces/routes.interface";
-import { RegisterUserDto, LoginUserDto, TokenManageDto, UpdateUserDto } from "@/dtos/auth.dto";
+import { RegisterUserDto, LoginUserDto, TokenManageDto } from "@/dtos/auth.dto";
+import { UpdateProfileDto } from "@/dtos/user.dto";
 import { authenticate } from "@/middlewares/authentication.middleware";
 
 class AuthRoute implements RouteInterface {
@@ -39,7 +40,7 @@ class AuthRoute implements RouteInterface {
     this.router.put(
       `${this.path}/profile`,
       authenticate,
-      validationMiddleware(UpdateUserDto, "body"),
+      validationMiddleware(UpdateProfileDto, "body"),
       this.authController.updateProfile,
     );
   }

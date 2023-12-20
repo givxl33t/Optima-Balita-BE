@@ -10,3 +10,7 @@ export const truncate = async (models: any) => {
     }),
   );
 };
+
+export const updateUserRole = async (userRoleModel: any, userId: string, roleId: string) => {
+  return await userRoleModel.update({ role_id: roleId }, { where: { user_id: userId } });
+};
