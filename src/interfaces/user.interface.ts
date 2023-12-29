@@ -1,3 +1,5 @@
+import { MetaInterface } from "./pagination.interface";
+
 export interface RoleInterface {
   id?: string;
   name: string;
@@ -23,4 +25,9 @@ export interface MappedUserInterface {
 export interface TokenInterface {
   accessToken: string;
   refreshToken: string;
+}
+
+export interface PaginatedUserInterface {
+  meta: MetaInterface;
+  rows: MappedUserInterface[];
 }

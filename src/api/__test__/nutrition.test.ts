@@ -8,6 +8,8 @@ import { truncate } from "@/utils/tests.utils";
 describe("nutrition endpoint", () => {
   let app;
   let nutritionRoute;
+  const authRoute = new AuthRoute();
+  const users = authRoute.authController.authService.users;
   let nutritionHistories;
   let accessToken;
 
@@ -31,8 +33,8 @@ describe("nutrition endpoint", () => {
     accessToken = body.accessToken;
   });
 
-  afterEach(async () => {
-    await truncate({ nutritionHistories });
+  afterAll(async () => {
+    await truncate({ users, nutritionHistories });
   });
 
   describe("when GET /api/bmi/me", () => {

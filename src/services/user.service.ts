@@ -1,7 +1,12 @@
 import DB from "@/config/database";
-import { UserInterface, MappedUserInterface } from "@interfaces/user.interface";
+import {
+  UserInterface,
+  MappedUserInterface,
+  PaginatedUserInterface,
+} from "@interfaces/user.interface";
 import { HttpExceptionBadRequest } from "@/exceptions/HttpException";
 import { UpdateUserDto } from "@/dtos/user.dto";
+import { metaBuilder } from "@/utils/pagination.utils";
 
 class UserService {
   public users = DB.UserModel;
@@ -21,19 +26,48 @@ class UserService {
     };
   };
 
-  public getUsers = async (currUserId: string): Promise<UserInterface[]> => {
-    const users = await this.users.findAll({
-      attributes: { exclude: ["password"] },
-      include: [
-        {
-          model: this.roles,
-          as: "roles",
-          through: { attributes: [] },
-        },
-      ],
-    });
+  public getUsers = async (
+    offset: number,
+    limit: number,
+    currUserId: string,
+  ): Promise<PaginatedUserInterface> => {
+    let meta;
+    let users;
 
-    return this.mappedUsers(users, currUserId);
+    if (!isNaN(offset) && !isNaN(limit)) {
+      users = await this.users.findAndCountAll({
+        attributes: {
+          exclude: ["password"],
+        },
+        include: [
+          {
+            model: this.roles,
+            as: "roles",
+            attributes: ["name"],
+          },
+        ],
+        offset,
+        limit,
+      });
+
+      const { rows, count } = users;
+      meta = metaBuilder(offset, limit, count);
+      return { rows: this.mappedUsers(rows, currUserId), meta };
+    } else {
+      users = await this.users.findAll({
+        attributes: {
+          exclude: ["password"],
+        },
+        include: [
+          {
+            model: this.roles,
+            as: "roles",
+            attributes: ["name"],
+          },
+        ],
+      });
+      return { rows: this.mappedUsers(users, currUserId), meta };
+    }
   };
 
   public updateUser = async (userData: UpdateUserDto, userId: string): Promise<void> => {

@@ -107,6 +107,70 @@ describe("users endpoint", () => {
     });
   });
 
+  describe("when GET /api/user/:userId", () => {
+    it("should response 200 and returned user", async () => {
+      // create user
+      const userData2 = {
+        username: "test2",
+        email: "test2@gmail.com",
+        password: "F4k3P4ssw0rd!",
+      };
+
+      await request(app.getServer()).post("/api/auth/register").send(userData2).expect(201);
+
+      const user = await users.findOne({ where: { email: userData2.email } });
+      const userId2 = user.id;
+
+      const res = await request(app.getServer())
+        .get(`/api/user/${userId2}`)
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}`)
+        .expect(200);
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data).toEqual(
+        expect.objectContaining({
+          email: userData2.email,
+        }),
+      );
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer()).get(`/api/user/${userId}`).expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/user/${userId}`)
+        .set("Authorization", "Bearer invalid_token");
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+
+    it("should response 403 if user is not admin", async () => {
+      const userData2 = {
+        username: "test2",
+        email: "test2@gmail.com",
+        password: "F4k3P4ssw0rd!",
+      };
+      await request(app.getServer()).post("/api/auth/register").send(userData2).expect(201);
+    });
+
+    it("should response 422 if userId is invalid", async () => {
+      const res = await request(app.getServer())
+        .get("/api/user/invalid_user_id")
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}`)
+        .expect(422);
+      expect(res.body.message).toEqual("Invalid User ID");
+    });
+
+    it("should response 400 if userId is not found", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/user/${userId}`)
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}`)
+        .expect(400);
+      expect(res.body.message).toEqual("User not found");
+    });
+  });
+
   describe("when PUT /api/user/:userId", () => {
     let userId2;
 
