@@ -1,4 +1,11 @@
 import { IsString, IsOptional, IsEmail, MaxLength, IsNotEmpty, IsUUID } from "class-validator";
+import { PaginationDto } from "./pagination.dto";
+
+export class GetUserQueryDto extends PaginationDto {
+  @IsString()
+  @IsOptional()
+  public filter: string;
+}
 
 export class UpdateProfileDto {
   @IsOptional()

@@ -9,6 +9,10 @@ export enum ArticleQuerySortOptions {
 export class GetArticleQueryDto extends PaginationDto {
   @IsString()
   @IsOptional()
+  public filter: string;
+
+  @IsString()
+  @IsOptional()
   @IsIn([...Object.keys(ArticleQuerySortOptions)])
   public sort: string;
 }

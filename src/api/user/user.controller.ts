@@ -10,10 +10,15 @@ class UserController {
 
   public getUsers = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
-      const { limit, page } = req.query;
+      const { limit, page, filter } = req.query;
       const offset: number = (Number(page) - 1) * Number(limit);
       const currUserId = req.user?.user_id;
-      const { rows, meta } = await this.userService.getUsers(offset, Number(limit), currUserId);
+      const { rows, meta } = await this.userService.getUsers(
+        offset,
+        Number(limit),
+        currUserId,
+        filter as string,
+      );
       res
         .status(status.OK)
         .json(apiResponse(status.OK, "OK", "Users successfully found", rows, meta));
