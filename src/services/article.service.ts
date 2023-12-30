@@ -50,16 +50,33 @@ class ArticleService {
   public getArticles = async (
     offset: number,
     limit: number,
+    filter?: string,
     order?: string,
   ): Promise<PaginatedArticleInterface> => {
     let meta;
     let articles;
     const orderClause: sequelize.Order = [];
+    const whereClause = {};
 
     if (order === "RANDOM") {
       orderClause.push([sequelize.fn("RANDOM")] as unknown as OrderItem);
     } else {
       orderClause.push(["created_at", "DESC"]);
+    }
+
+    if (filter) {
+      whereClause[sequelize.Op.or] = [
+        {
+          title: {
+            [sequelize.Op.iLike]: `%${filter}%`,
+          },
+        },
+        {
+          description: {
+            [sequelize.Op.iLike]: `%${filter}%`,
+          },
+        },
+      ];
     }
 
     if (!isNaN(offset) && !isNaN(limit)) {
@@ -81,9 +98,10 @@ class ArticleService {
             attributes: ["username"],
           },
         ],
+        where: whereClause,
+        order: orderClause,
         offset,
         limit,
-        order: orderClause,
       });
 
       const { rows, count } = articles;
@@ -108,6 +126,7 @@ class ArticleService {
             attributes: ["username"],
           },
         ],
+        where: whereClause,
         order: orderClause,
       });
 

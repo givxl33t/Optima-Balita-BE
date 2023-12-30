@@ -17,11 +17,12 @@ class ArticleController {
   });
 
   public getArticles = expressAsyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const { limit, page, sort } = req.query;
+    const { limit, page, filter, sort } = req.query;
     const offset: number = (Number(page) - 1) * Number(limit);
     const { rows, meta } = await this.articleService.getArticles(
       offset,
       Number(limit),
+      filter as string,
       sort as string,
     );
     res

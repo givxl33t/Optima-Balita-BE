@@ -1,7 +1,7 @@
 import { Router } from "express";
 import UserController from "./user.controller";
 import validationMiddleware from "@/middlewares/validation.middleware";
-import { UpdateUserDto, UserIdParamDto } from "@/dtos/user.dto";
+import { GetUserQueryDto, UpdateUserDto, UserIdParamDto } from "@/dtos/user.dto";
 import { RouteInterface } from "@/interfaces/routes.interface";
 import { authenticate } from "@/middlewares/authentication.middleware";
 import { authorize } from "@/middlewares/authorization.middleware";
@@ -17,7 +17,20 @@ class UserRoute implements RouteInterface {
   }
 
   private initializeRoutes(): void {
-    this.router.get(`${this.path}`, authenticate, authorize([ADMIN]), this.userController.getUsers);
+    this.router.get(
+      `${this.path}`,
+      authenticate,
+      authorize([ADMIN]),
+      validationMiddleware(GetUserQueryDto, "query"),
+      this.userController.getUsers,
+    );
+    this.router.get(
+      `${this.path}/:userId`,
+      authenticate,
+      authorize([ADMIN]),
+      validationMiddleware(UserIdParamDto, "params"),
+      this.userController.getUser,
+    );
     this.router.put(
       `${this.path}/:userId`,
       authenticate,
