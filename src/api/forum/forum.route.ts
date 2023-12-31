@@ -11,6 +11,7 @@ import {
   DiscussionIdParamDto,
   CommentIdParamDto,
 } from "@/dtos/forum.dto";
+import { PaginationDto } from "@/dtos/pagination.dto";
 import validationMiddleware from "@/middlewares/validation.middleware";
 
 class ForumRoute implements RouteInterface {
@@ -27,7 +28,7 @@ class ForumRoute implements RouteInterface {
       `${this.path}/:discussionId`,
       authenticate,
       validationMiddleware(DiscussionIdParamDto, "params"),
-      this.forumController.getDiscussionComments,
+      this.forumController.getDiscussion,
     );
     this.router.get(
       `${this.path}`,
@@ -54,6 +55,19 @@ class ForumRoute implements RouteInterface {
       validationMiddleware(DiscussionIdParamDto, "params"),
       this.forumController.deleteDiscussion,
     );
+    this.router.get(
+      `${this.path}/:discussionId/comment`,
+      authenticate,
+      validationMiddleware(DiscussionIdParamDto, "params"),
+      validationMiddleware(PaginationDto, "query"),
+      this.forumController.getComments,
+    );
+    this.router.get(
+      `${this.path}/comment/:commentId`,
+      authenticate,
+      validationMiddleware(CommentIdParamDto, "params"),
+      this.forumController.getComment,
+    );
     this.router.post(
       `${this.path}/:discussionId/comment`,
       authenticate,
@@ -73,6 +87,12 @@ class ForumRoute implements RouteInterface {
       authenticate,
       validationMiddleware(CommentIdParamDto, "params"),
       this.forumController.deleteComment,
+    );
+    this.router.get(
+      `${this.path}/:discussionId/like`,
+      authenticate,
+      validationMiddleware(DiscussionIdParamDto, "params"),
+      this.forumController.getLikes,
     );
     this.router.post(
       `${this.path}/:discussionId/like`,

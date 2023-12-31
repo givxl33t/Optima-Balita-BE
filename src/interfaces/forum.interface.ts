@@ -1,5 +1,6 @@
 import { UserModel } from "@/api/auth/user.model";
 import { CommentModel } from "@/api/forum/comment.model";
+import { MetaInterface } from "./pagination.interface";
 
 export interface DiscussionInterface {
   id: string;
@@ -17,6 +18,7 @@ export interface CommentInterface {
   comment_content: string;
   commenter_id: string;
   discussion_id: string;
+  discussion?: DiscussionInterface;
   commenter: UserModel;
   created_at: Date;
 }
@@ -42,4 +44,14 @@ export interface MappedDiscussionInterface {
   like_count: number;
   comments?: MappedCommentInterface[];
   created_at: Date;
+}
+
+export interface PaginatedDiscussionInterface {
+  meta: MetaInterface;
+  rows: MappedDiscussionInterface[];
+}
+
+export interface PaginatedCommentInterface {
+  meta: MetaInterface;
+  rows: MappedCommentInterface[];
 }

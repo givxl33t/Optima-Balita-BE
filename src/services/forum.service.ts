@@ -4,6 +4,8 @@ import {
   DiscussionInterface,
   MappedCommentInterface,
   MappedDiscussionInterface,
+  PaginatedCommentInterface,
+  PaginatedDiscussionInterface,
 } from "@/interfaces/forum.interface";
 import {
   CreateCommentDto,
@@ -12,6 +14,9 @@ import {
   UpdateCommentDto,
 } from "@/dtos/forum.dto";
 import { HttpExceptionBadRequest, HttpExceptionForbidden } from "@/exceptions/HttpException";
+import sequelize from "sequelize";
+import { metaBuilder } from "@/utils/pagination.utils";
+import { UserInterface } from "@/interfaces/user.interface";
 
 class ForumService {
   public discussions = DB.DiscussionModel;
@@ -22,61 +27,129 @@ class ForumService {
 
   public getDiscussions = async (
     userId: string,
+    offset: number,
+    limit: number,
+    filter?: string,
     commentOption?: string,
-  ): Promise<MappedDiscussionInterface[]> => {
-    const discussions = await this.discussions.findAll({
-      attributes: ["id", "title", "post_content", "poster_id", "created_at"],
-      include: [
-        {
-          model: this.comments,
-          as: "comments",
-          attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
-          include: [
-            {
-              model: this.users,
-              as: "commenter",
-              attributes: ["id", "username", "profile"],
-              include: [
-                {
-                  model: this.roles,
-                  as: "roles",
-                  attributes: ["name"],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          model: this.users,
-          as: "poster",
-          attributes: ["id", "username", "profile"],
-          include: [
-            {
-              model: this.roles,
-              as: "roles",
-              attributes: ["name"],
-            },
-          ],
-        },
-        {
-          model: this.users,
-          through: {
-            attributes: [],
-          },
-          as: "likes",
-          attributes: ["id", "username"],
-        },
-      ],
-    });
+  ): Promise<PaginatedDiscussionInterface> => {
+    let meta;
+    let discussions;
+    const whereClause = {};
 
-    return this.mappedDiscussions(discussions, userId, commentOption);
+    if (filter) {
+      whereClause["title"] = { [sequelize.Op.iLike]: `%${filter}%` };
+    }
+
+    if (!isNaN(offset) && !isNaN(limit)) {
+      discussions = await this.discussions.findAndCountAll({
+        attributes: ["id", "title", "post_content", "poster_id", "created_at"],
+        include: [
+          {
+            model: this.comments,
+            as: "comments",
+            attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
+            include: [
+              {
+                model: this.users,
+                as: "commenter",
+                attributes: ["id", "username", "profile"],
+                include: [
+                  {
+                    model: this.roles,
+                    as: "roles",
+                    attributes: ["name"],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            model: this.users,
+            as: "poster",
+            attributes: ["id", "username", "profile"],
+            include: [
+              {
+                model: this.roles,
+                as: "roles",
+                attributes: ["name"],
+              },
+            ],
+          },
+          {
+            model: this.users,
+            through: {
+              attributes: [],
+            },
+            as: "likes",
+            attributes: ["id", "username"],
+          },
+        ],
+        where: whereClause,
+        offset,
+        limit,
+        distinct: true,
+      });
+
+      const { rows, count } = discussions;
+      meta = metaBuilder(offset, limit, count);
+      return { rows: this.mappedDiscussions(rows, userId, commentOption), meta };
+    } else {
+      discussions = await this.discussions.findAll({
+        attributes: ["id", "title", "post_content", "poster_id", "created_at"],
+        include: [
+          {
+            model: this.comments,
+            as: "comments",
+            attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
+            include: [
+              {
+                model: this.users,
+                as: "commenter",
+                attributes: ["id", "username", "profile"],
+                include: [
+                  {
+                    model: this.roles,
+                    as: "roles",
+                    attributes: ["name"],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            model: this.users,
+            as: "poster",
+            attributes: ["id", "username", "profile"],
+            include: [
+              {
+                model: this.roles,
+                as: "roles",
+                attributes: ["name"],
+              },
+            ],
+          },
+          {
+            model: this.users,
+            through: {
+              attributes: [],
+            },
+            as: "likes",
+            attributes: ["id", "username"],
+          },
+        ],
+        where: whereClause,
+      });
+
+      return { rows: this.mappedDiscussions(discussions, userId, commentOption), meta };
+    }
   };
 
-  public getDiscussionComments = async (
+  public getDiscussion = async (
     discussionId: string,
     userId: string,
   ): Promise<MappedDiscussionInterface> => {
     const discussion = await this.discussions.findByPk(discussionId, {
+      attributes: ["id", "title", "post_content", "poster_id", "created_at"],
       include: [
         {
           model: this.comments,
@@ -122,8 +195,7 @@ class ForumService {
 
     if (!discussion) throw new HttpExceptionBadRequest("Discussion not found.");
 
-    const mappedDiscussion = this.mappedDiscussions([discussion], userId, "WITHCOMMENT")[0];
-    return mappedDiscussion;
+    return this.mappedDiscussions([discussion], userId, "WITHCOMMENT")[0];
   };
 
   public createDiscussion = async (
@@ -156,6 +228,110 @@ class ForumService {
       throw new HttpExceptionForbidden("You are not the poster.");
 
     await this.discussions.destroy({ where: { id: discussionId } });
+  };
+
+  public getComments = async (
+    discussionId: string,
+    offset: number,
+    limit: number,
+  ): Promise<PaginatedCommentInterface> => {
+    let meta;
+    let comments;
+    const whereClause = {
+      discussion_id: discussionId,
+    };
+
+    if (!isNaN(offset) && !isNaN(limit)) {
+      comments = await this.comments.findAndCountAll({
+        attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
+        include: [
+          {
+            model: this.users,
+            as: "commenter",
+            attributes: ["id", "username", "profile"],
+            include: [
+              {
+                model: this.roles,
+                as: "roles",
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+        where: whereClause,
+        offset,
+        limit,
+        distinct: true,
+      });
+
+      const { rows, count } = comments;
+      meta = metaBuilder(offset, limit, count);
+      return { rows: this.mappedComments(rows), meta };
+    } else {
+      comments = await this.comments.findAll({
+        attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
+        include: [
+          {
+            model: this.users,
+            as: "commenter",
+            attributes: ["id", "username", "profile"],
+            include: [
+              {
+                model: this.roles,
+                as: "roles",
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+        where: whereClause,
+      });
+
+      return { rows: this.mappedComments(comments), meta };
+    }
+  };
+
+  public getComment = async (commentId: string): Promise<MappedCommentInterface> => {
+    const comment = await this.comments.findByPk(commentId, {
+      attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
+      include: [
+        {
+          model: this.users,
+          as: "commenter",
+          attributes: ["id", "username", "profile"],
+          include: [
+            {
+              model: this.roles,
+              as: "roles",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: this.discussions,
+          as: "discussion",
+          attributes: ["id", "title", "post_content", "poster_id", "created_at"],
+          include: [
+            {
+              model: this.users,
+              as: "poster",
+              attributes: ["id", "username", "profile"],
+              include: [
+                {
+                  model: this.roles,
+                  as: "roles",
+                  attributes: ["name"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!comment) throw new HttpExceptionBadRequest("Comment not found.");
+
+    return this.mappedComments([comment])[0];
   };
 
   public createComment = async (
@@ -196,6 +372,28 @@ class ForumService {
       throw new HttpExceptionForbidden("You are not the commenter.");
 
     await this.comments.destroy({ where: { id: commentId } });
+  };
+
+  public getLikes = async (discussionId: string): Promise<UserInterface[]> => {
+    const existDiscussion = await this.discussions.findByPk(discussionId);
+    if (!existDiscussion) throw new HttpExceptionBadRequest("Discussion not found.");
+
+    const userLikes = await this.users.findAll({
+      attributes: ["id", "profile", "username"],
+      include: [
+        {
+          model: this.discussions,
+          through: {
+            attributes: [],
+          },
+          as: "likers",
+          attributes: [],
+          where: { id: discussionId },
+        },
+      ],
+    });
+
+    return userLikes;
   };
 
   public likeDiscussion = async (discussionId: string, userId: string): Promise<boolean> => {
@@ -276,6 +474,51 @@ class ForumService {
     });
 
     return mappedDiscussions;
+  };
+
+  public mappedComments = (comments: CommentInterface[]): MappedCommentInterface[] => {
+    const mappedComments = comments.map((comment) => {
+      const commenter_username = comment.commenter.username;
+      const commenter_profile = comment.commenter.profile;
+      const commenter_role = comment.commenter.roles[0].name;
+      if (comment.discussion) {
+        const discussion_title = comment.discussion.title;
+        const discussion_post_content = comment.discussion.post_content;
+        const discussion_poster_id = comment.discussion.poster_id;
+        const discussion_poster_username = comment.discussion.poster.username;
+        const discussion_poster_profile = comment.discussion.poster.profile;
+        const discussion_poster_role = comment.discussion.poster.roles[0].name;
+        return {
+          id: comment.id,
+          comment_content: comment.comment_content,
+          commenter_id: comment.commenter_id,
+          commenter_username,
+          commenter_profile,
+          commenter_role,
+          discussion_id: comment.discussion_id,
+          discussion_title,
+          discussion_post_content,
+          discussion_poster_id,
+          discussion_poster_username,
+          discussion_poster_profile,
+          discussion_poster_role,
+          created_at: comment.created_at,
+        };
+      }
+
+      return {
+        id: comment.id,
+        comment_content: comment.comment_content,
+        commenter_id: comment.commenter_id,
+        commenter_username,
+        commenter_profile,
+        commenter_role,
+        discussion_id: comment.discussion_id,
+        created_at: comment.created_at,
+      };
+    });
+
+    return mappedComments;
   };
 }
 

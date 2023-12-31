@@ -1,11 +1,16 @@
 /* eslint-disable no-unused-vars */
 import { IsString, IsNotEmpty, IsUUID, IsIn, IsOptional, MaxLength } from "class-validator";
+import { PaginationDto } from "./pagination.dto";
 
 export enum DiscussionQueryOption {
   WITHCOMMENT = "WITHCOMMENT",
 }
 
-export class GetDiscussionsQueryDto {
+export class GetDiscussionsQueryDto extends PaginationDto {
+  @IsString()
+  @IsOptional()
+  public filter: string;
+
   @IsString()
   @IsOptional()
   @IsIn([...Object.keys(DiscussionQueryOption)])
