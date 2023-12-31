@@ -8,14 +8,11 @@ import { apiResponse } from "@/utils/apiResponse.utils";
 class ForumController {
   public forumService = new ForumService();
 
-  public getDiscussionComments = expressAsyncHandler(
+  public getDiscussion = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
       const discussionId = req.params.discussionId;
       const userId = req.user?.user_id;
-      const discussionComments = await this.forumService.getDiscussionComments(
-        discussionId,
-        userId,
-      );
+      const discussionComments = await this.forumService.getDiscussion(discussionId, userId);
       res
         .status(status.OK)
         .json(apiResponse(status.OK, "OK", "Discussions successfully found", discussionComments));
@@ -24,12 +21,19 @@ class ForumController {
 
   public getDiscussions = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
-      const { option } = req.query;
+      const { limit, page, filter, option } = req.query;
+      const offset: number = (Number(page) - 1) * Number(limit);
       const userId = req.user?.user_id;
-      const discussions = await this.forumService.getDiscussions(userId, option as string);
+      const { rows, meta } = await this.forumService.getDiscussions(
+        userId,
+        offset,
+        Number(limit),
+        filter as string,
+        option as string,
+      );
       res
         .status(status.OK)
-        .json(apiResponse(status.OK, "OK", "Discussions successfully found", discussions));
+        .json(apiResponse(status.OK, "OK", "Discussions successfully found", rows, meta));
     },
   );
 
@@ -70,6 +74,32 @@ class ForumController {
     },
   );
 
+  public getComments = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const discussionId = req.params.discussionId;
+      const { limit, page } = req.query;
+      const offset: number = (Number(page) - 1) * Number(limit);
+      const { rows, meta } = await this.forumService.getComments(
+        discussionId,
+        offset,
+        Number(limit),
+      );
+      res
+        .status(status.OK)
+        .json(apiResponse(status.OK, "OK", "Comments successfully found", rows, meta));
+    },
+  );
+
+  public getComment = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const commentId = req.params.commentId;
+      const comment = await this.forumService.getComment(commentId);
+      res
+        .status(status.OK)
+        .json(apiResponse(status.OK, "OK", "Comment successfully found", comment));
+    },
+  );
+
   public createComment = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
       const commentData = req.body;
@@ -104,6 +134,14 @@ class ForumController {
       const commenterId = req.user?.user_id;
       await this.forumService.deleteComment(commentId, commenterId);
       res.status(status.OK).json(apiResponse(status.OK, "OK", "Comment successfully deleted"));
+    },
+  );
+
+  public getLikes = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const discussionId = req.params.discussionId;
+      const likers = await this.forumService.getLikes(discussionId);
+      res.status(status.OK).json(apiResponse(status.OK, "OK", "Likes successfully found", likers));
     },
   );
 

@@ -10,6 +10,8 @@ import { verifyAccessToken } from "@/utils/jwt.utils";
 describe("forum endpoint", () => {
   let app;
   let forumRoute;
+  const authRoute = new AuthRoute();
+  const users = authRoute.authController.authService.users;
   let discussions;
   let comments;
   let userDiscussionLikes;
@@ -37,11 +39,13 @@ describe("forum endpoint", () => {
     accessToken = body.accessToken;
   });
 
-  afterEach(async () => {
-    await truncate({ discussions, comments, userDiscussionLikes });
+  afterAll(async () => {
+    await truncate({ users, discussions, comments, userDiscussionLikes });
   });
 
   describe("when GET /api/forum", () => {
+    const page = 1;
+    const limit = 3;
     const discussionData: CreateDiscussionDto = {
       title: "Discussion 1",
       post_content: "Discussion 1 content",
@@ -70,8 +74,39 @@ describe("forum endpoint", () => {
         .set("Authorization", `Bearer ${accessToken}`)
         .expect(200);
       expect(res.body.data).toBeDefined();
-      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data).toHaveLength(2);
       expect(res.body.data[0].comments).toBeDefined();
+    });
+
+    it("should response 200 and returned all discussions with pagination", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/forum?page=${page}&limit=${limit}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.meta).toBeDefined();
+      expect(res.body.meta.page).toEqual(page);
+      expect(res.body.meta.per_page).toEqual(limit);
+      expect(res.body.meta.page_size).toEqual(1);
+      expect(res.body.meta.total_data).toEqual(3);
+    });
+
+    it("should response 200 and paginate the discussions properly", async () => {
+      for (let i = 0; i < limit + 1; i++) {
+        await request(app.getServer())
+          .post("/api/forum")
+          .set("Authorization", `Bearer ${accessToken}`)
+          .send(discussionData);
+      }
+
+      const res = await request(app.getServer())
+        .get(`/api/forum?page=${page}&limit=${limit}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.meta).toBeDefined();
+      expect(res.body.meta.page).toEqual(page);
+      expect(res.body.meta.per_page).toEqual(limit);
+      expect(res.body.meta.page_size).toEqual(3);
+      expect(res.body.meta.total_data).toEqual(8);
     });
 
     it("should response 401 if token is not provided", async () => {
@@ -379,6 +414,131 @@ describe("forum endpoint", () => {
         .set("Authorization", `Bearer ${accessToken}`)
         .expect(400);
       expect(res.body.message).toEqual("Discussion not found.");
+    });
+  });
+
+  describe("when GET /api/forum/discussion/comment", () => {
+    let discussionId;
+
+    const discussionData: CreateDiscussionDto = {
+      title: "Discussion 1",
+      post_content: "Discussion 1 content",
+    };
+
+    const commentData: CreateCommentDto = {
+      comment_content: "Comment 1 content",
+    };
+
+    beforeEach(async () => {
+      const res = await request(app.getServer())
+        .post("/api/forum")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(discussionData);
+      discussionId = res.body.data.id;
+
+      await request(app.getServer())
+        .post(`/api/forum/${discussionId}/comment`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(commentData);
+    });
+
+    it("should response 200 and returned all comments", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/forum/${discussionId}/comment`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data).toHaveLength(1);
+    });
+
+    it("should response 200 and returned all comments with pagination", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/forum/${discussionId}/comment?page=1&limit=3`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.meta).toBeDefined();
+      expect(res.body.meta.page).toEqual(1);
+      expect(res.body.meta.per_page).toEqual(3);
+      expect(res.body.meta.page_size).toEqual(1);
+      expect(res.body.meta.total_data).toEqual(1);
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer()).get("/api/forum/discussion/comment").expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .get("/api/forum/discussion/comment")
+        .set("Authorization", "Bearer invalid_token")
+        .expect(401);
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+  });
+
+  describe("when GET /api/forum/comment/:commentId", () => {
+    let discussionId;
+    let commentId;
+
+    const discussionData: CreateDiscussionDto = {
+      title: "Discussion 1",
+      post_content: "Discussion 1 content",
+    };
+
+    const commentData: CreateCommentDto = {
+      comment_content: "Comment 1 content",
+    };
+
+    beforeEach(async () => {
+      const res = await request(app.getServer())
+        .post("/api/forum")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(discussionData);
+      discussionId = res.body.data.id;
+
+      const commentRes = await request(app.getServer())
+        .post(`/api/forum/${discussionId}/comment`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(commentData);
+      commentId = commentRes.body.data.id;
+    });
+
+    it("should response 200 and returned a comment", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/forum/comment/${commentId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.data).toBeDefined();
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer()).get(`/api/forum/comment/${commentId}`).expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/forum/comment/${commentId}`)
+        .set("Authorization", "Bearer invalid_token")
+        .expect(401);
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+
+    it("should response 422 if commentId is invalid", async () => {
+      const res = await request(app.getServer())
+        .get("/api/forum/comment/invalid_comment_id")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(422);
+      expect(res.body.message).toEqual("Invalid Comment ID");
+    });
+
+    it("should response 400 if comment is not found", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/forum/comment/${uuidv4()}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(400);
+      expect(res.body.message).toEqual("Comment not found.");
     });
   });
 
