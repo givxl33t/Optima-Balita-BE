@@ -71,6 +71,7 @@ class UserService {
           },
         ],
         where: whereClause,
+        order: [["created_at", "DESC"]],
         offset,
         limit,
       });
@@ -89,6 +90,7 @@ class UserService {
             attributes: ["name"],
           },
         ],
+        order: [["created_at", "DESC"]],
       });
       return { rows: this.mappedUsers(users), meta };
     }

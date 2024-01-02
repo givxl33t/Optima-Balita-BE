@@ -85,6 +85,7 @@ class ForumService {
           },
         ],
         where: whereClause,
+        order: [["created_at", "DESC"]],
         offset,
         limit,
         distinct: true,
@@ -137,6 +138,7 @@ class ForumService {
             attributes: ["id", "username"],
           },
         ],
+        order: [["created_at", "DESC"]],
         where: whereClause,
       });
 

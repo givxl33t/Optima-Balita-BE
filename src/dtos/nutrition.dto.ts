@@ -1,5 +1,14 @@
 /* eslint-disable no-unused-vars */
-import { IsString, IsNumberString, IsDecimal, IsNotEmpty, IsIn, MaxLength } from "class-validator";
+import {
+  IsString,
+  IsNumberString,
+  IsDecimal,
+  IsNotEmpty,
+  IsIn,
+  MaxLength,
+  IsOptional,
+} from "class-validator";
+import { PaginationDto } from "./pagination.dto";
 
 export enum WeightCategory {
   NORMAL = "Normal",
@@ -11,6 +20,12 @@ export enum WeightCategory {
 export enum Gender {
   LAKI_LAKI = "Laki-laki",
   PEREMPUAN = "Perempuan",
+}
+
+export class GetChildrenQueryDto extends PaginationDto {
+  @IsString()
+  @IsOptional()
+  public filter: string;
 }
 
 export class CreateNutritionHistoryDto {
