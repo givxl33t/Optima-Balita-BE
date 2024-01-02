@@ -3,6 +3,7 @@ import { UserModel } from "../auth/user.model";
 
 export class NutritionHistoryModel extends Model {
   public id!: CreationOptional<string>;
+  public child_id!: string;
   public child_name!: string;
   public age_text!: string;
   public height!: number;
@@ -39,6 +40,10 @@ export default function (sequelize: Sequelize): typeof NutritionHistoryModel {
         primaryKey: true,
         defaultValue: DataTypes.UUIDV4,
       },
+      child_id: {
+        type: DataTypes.STRING(256),
+        allowNull: false,
+      },
       child_name: {
         type: DataTypes.STRING(256),
         allowNull: false,
@@ -48,11 +53,11 @@ export default function (sequelize: Sequelize): typeof NutritionHistoryModel {
         allowNull: false,
       },
       height: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: false,
       },
       weight: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: false,
       },
       bmi: {

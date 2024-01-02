@@ -3,13 +3,17 @@ import App from "@/app";
 import { CreateNutritionHistoryDto } from "@/dtos/nutrition.dto";
 import NutritionRoute from "@/api/nutrition/nutrition.route";
 import AuthRoute from "@/api/auth/auth.route";
-import { truncate } from "@/utils/tests.utils";
+import { truncate, updateUserRole } from "@/utils/tests.utils";
+import { ADMIN_ID as ADMIN } from "@/utils/constant.utils";
+import UserRoute from "../user/user.route";
 
 describe("nutrition endpoint", () => {
   let app;
   let nutritionRoute;
   const authRoute = new AuthRoute();
+  const userRoute = new UserRoute();
   const users = authRoute.authController.authService.users;
+  const userRoles = userRoute.userController.userService.userRoles;
   let nutritionHistories;
   let accessToken;
 
@@ -25,6 +29,11 @@ describe("nutrition endpoint", () => {
     };
 
     await request(app.getServer()).post("/api/auth/register").send(userData);
+
+    const user = await users.findOne({ where: { email: userData.email } });
+    const userId = user?.id;
+    await updateUserRole(userRoles, userId as string, ADMIN as string);
+
     const { body } = await request(app.getServer())
       .post("/api/auth/login")
       .send({ email: userData.email, password: userData.password })
@@ -35,6 +44,75 @@ describe("nutrition endpoint", () => {
 
   afterAll(async () => {
     await truncate({ users, nutritionHistories });
+  });
+
+  describe("when GET /api/bmi/children", () => {
+    it("should response 200 and returned all children", async () => {
+      const res = await request(app.getServer())
+        .get("/api/bmi/children")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data).toHaveLength(0);
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer()).get("/api/bmi/children").expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .get("/api/bmi/children")
+        .set("Authorization", "Bearer invalid_token")
+        .expect(401);
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+  });
+
+  describe("when GET /api/bmi/children/:childId", () => {
+    it("should response 200 and returned all children", async () => {
+      const nutritionHistoryData: CreateNutritionHistoryDto = {
+        child_name: "Test Child",
+        age_text: "1 tahun 11 bulan",
+        height: "100",
+        weight: "20",
+        bmi: "15.32",
+        weight_category: "Underweight",
+        gender: "Laki-laki",
+      };
+
+      const res1 = await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(nutritionHistoryData);
+
+      const res = await request(app.getServer())
+        .get(`/api/bmi/children/${res1.body.data.child_id}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data).toEqual(
+        expect.objectContaining({
+          child_name: nutritionHistoryData.child_name,
+        }),
+      );
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer()).get("/api/bmi/children/1").expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .get("/api/bmi/children/1")
+        .set("Authorization", "Bearer invalid_token")
+        .expect(401);
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
   });
 
   describe("when GET /api/bmi/me", () => {
@@ -78,7 +156,7 @@ describe("nutrition endpoint", () => {
         .expect(200);
 
       expect(res1.body.data).toBeDefined();
-      expect(res1.body.data).toHaveLength(1);
+      expect(res1.body.data).toHaveLength(2);
 
       const res2 = await request(app.getServer())
         .get("/api/bmi/me")

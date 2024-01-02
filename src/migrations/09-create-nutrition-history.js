@@ -9,6 +9,10 @@ module.exports = {
         primaryKey: true,
         defaultValue: Sequelize.UUIDV4,
       },
+      child_id: {
+        type: Sequelize.STRING(256),
+        allowNull: false,
+      },
       child_name: {
         type: Sequelize.STRING(256),
         allowNull: false,
@@ -18,11 +22,11 @@ module.exports = {
         allowNull: false,
       },
       height: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.FLOAT,
         allowNull: false,
       },
       weight: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.FLOAT,
         allowNull: false,
       },
       bmi: {
