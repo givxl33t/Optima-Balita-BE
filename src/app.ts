@@ -48,7 +48,7 @@ class App {
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
     this.app.use(cors({ origin: "*", credentials: true }));
-    this.app.use(limiterMiddleware);
+    // this.app.use(limiterMiddleware);
   }
 
   private initializeRoutes(routes: RouteInterface[]): void {

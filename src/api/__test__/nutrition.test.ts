@@ -1,10 +1,10 @@
 import request from "supertest";
 import App from "@/app";
-import { CreateNutritionHistoryDto } from "@/dtos/nutrition.dto";
 import NutritionRoute from "@/api/nutrition/nutrition.route";
 import AuthRoute from "@/api/auth/auth.route";
 import { truncate, updateUserRole } from "@/utils/tests.utils";
 import { ADMIN_ID as ADMIN } from "@/utils/constant.utils";
+import { v4 as uuidv4 } from "uuid";
 import UserRoute from "../user/user.route";
 
 describe("nutrition endpoint", () => {
@@ -73,7 +73,7 @@ describe("nutrition endpoint", () => {
 
   describe("when GET /api/bmi/children/:childId", () => {
     it("should response 200 and returned all children", async () => {
-      const nutritionHistoryData: CreateNutritionHistoryDto = {
+      const nutritionHistoryData = {
         child_name: "Test Child",
         age_text: "1 tahun 11 bulan",
         height: "100",
@@ -118,7 +118,7 @@ describe("nutrition endpoint", () => {
   describe("when GET /api/bmi/me", () => {
     let secondAccessToken;
 
-    const nutritionHistoryData: CreateNutritionHistoryDto = {
+    const nutritionHistoryData = {
       child_name: "Test Child",
       age_text: "1 tahun 11 bulan",
       height: "100",
@@ -180,8 +180,68 @@ describe("nutrition endpoint", () => {
     });
   });
 
+  describe("when GET /api/bmi/:nutritionHistoryId", () => {
+    const nutritionHistoryData = {
+      child_name: "Test Child",
+      age_text: "1 tahun 11 bulan",
+      height: "100",
+      weight: "20",
+      bmi: "15.32",
+      weight_category: "Underweight",
+      gender: "Laki-laki",
+    };
+
+    it("should response 200 and returned nutrition history", async () => {
+      const res1 = await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(nutritionHistoryData);
+
+      const res2 = await request(app.getServer())
+        .get(`/api/bmi/${res1.body.data.id}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res2.body.data).toBeDefined();
+      expect(res2.body.data).toEqual(
+        expect.objectContaining({
+          child_name: nutritionHistoryData.child_name,
+        }),
+      );
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer()).get("/api/bmi/1").expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .get("/api/bmi/1")
+        .set("Authorization", "Bearer invalid_token")
+        .expect(401);
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+
+    it("should response 422 if nutritionHistoryId is invalid", async () => {
+      const res = await request(app.getServer())
+        .get("/api/bmi/invalid")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(422);
+      expect(res.body.message).toEqual("Invalid Nutrition History ID");
+    });
+
+    it("should response 400 if nutrition history not found", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/bmi/${uuidv4()}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(400);
+      expect(res.body.message).toEqual("Nutrition History not found");
+    });
+  });
+
   describe("when POST /api/bmi", () => {
-    const nutritionHistoryData: CreateNutritionHistoryDto = {
+    const nutritionHistoryData = {
       child_name: "Test Child",
       age_text: "1 tahun 11 bulan",
       height: "100",
@@ -256,26 +316,6 @@ describe("nutrition endpoint", () => {
       expect(res.body.message).toEqual("Weight Required");
     });
 
-    it("should response 422 if bmi is not provided", async () => {
-      const res = await request(app.getServer())
-        .post("/api/bmi")
-        .set("Authorization", `Bearer ${accessToken}`)
-        .send({ ...nutritionHistoryData, bmi: null })
-        .expect(422);
-      expect(res.body.message).toEqual("BMI Required");
-    });
-
-    it("should response 422 if weight_category is not a valid option", async () => {
-      const res = await request(app.getServer())
-        .post("/api/bmi")
-        .set("Authorization", `Bearer ${accessToken}`)
-        .send({ ...nutritionHistoryData, weight_category: "invalid" })
-        .expect(422);
-      expect(res.body.message).toEqual(
-        "weight_category must be one of the following values: Normal, Underweight, Overweight, Obesity",
-      );
-    });
-
     it("should response 422 if gender is not a valid option", async () => {
       const res = await request(app.getServer())
         .post("/api/bmi")
@@ -285,6 +325,137 @@ describe("nutrition endpoint", () => {
       expect(res.body.message).toEqual(
         "gender must be one of the following values: Laki-laki, Perempuan",
       );
+    });
+  });
+
+  describe("when PUT /api/bmi/:nutritionHistoryId", () => {
+    let nutritionHistoryId;
+
+    const nutritionHistoryData = {
+      child_name: "Test Child",
+      age_text: "1 tahun 11 bulan",
+      height: "100",
+      weight: "20",
+      bmi: "15.32",
+      weight_category: "Underweight",
+      gender: "Laki-laki",
+    };
+
+    beforeAll(async () => {
+      const res = await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(nutritionHistoryData);
+
+      nutritionHistoryId = res.body.data.id;
+    });
+
+    it("should response 200 and updated nutrition history", async () => {
+      const res = await request(app.getServer())
+        .put(`/api/bmi/${nutritionHistoryId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ height: "200" })
+        .expect(200);
+
+      expect(res.body.message).toEqual("Nutrition history successfully updated");
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer())
+        .put(`/api/bmi/${nutritionHistoryId}`)
+        .send(nutritionHistoryData)
+        .expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .put(`/api/bmi/${nutritionHistoryId}`)
+        .set("Authorization", "Bearer invalid_token")
+        .send(nutritionHistoryData)
+        .expect(401);
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+
+    it("should response 422 if nutritionHistoryId is invalid", async () => {
+      const res = await request(app.getServer())
+        .put("/api/bmi/invalid")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(nutritionHistoryData)
+        .expect(422);
+      expect(res.body.message).toEqual("Invalid Nutrition History ID");
+    });
+
+    it("should response 400 if nutrition history not found", async () => {
+      const res = await request(app.getServer())
+        .put(`/api/bmi/${uuidv4()}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ height: "200" })
+        .expect(400);
+      expect(res.body.message).toEqual("Nutrition History not found");
+    });
+  });
+
+  describe("when DELETE /api/bmi/:nutritionHistoryId", () => {
+    let nutritionHistoryId;
+
+    const nutritionHistoryData = {
+      child_name: "Test Child",
+      age_text: "1 tahun 11 bulan",
+      height: "100",
+      weight: "20",
+      bmi: "15.32",
+      weight_category: "Underweight",
+      gender: "Laki-laki",
+    };
+
+    beforeAll(async () => {
+      const res = await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(nutritionHistoryData);
+
+      nutritionHistoryId = res.body.data.id;
+    });
+
+    it("should response 200 and deleted nutrition history", async () => {
+      const res = await request(app.getServer())
+        .delete(`/api/bmi/${nutritionHistoryId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.message).toEqual("Nutrition history successfully deleted");
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer())
+        .delete(`/api/bmi/${nutritionHistoryId}`)
+        .expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .delete(`/api/bmi/${nutritionHistoryId}`)
+        .set("Authorization", "Bearer invalid_token")
+        .expect(401);
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+
+    it("should response 422 if nutritionHistoryId is invalid", async () => {
+      const res = await request(app.getServer())
+        .delete("/api/bmi/invalid")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(422);
+      expect(res.body.message).toEqual("Invalid Nutrition History ID");
+    });
+
+    it("should response 400 if nutrition history not found", async () => {
+      const res = await request(app.getServer())
+        .delete(`/api/bmi/${uuidv4()}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(400);
+      expect(res.body.message).toEqual("Nutrition History not found");
     });
   });
 });

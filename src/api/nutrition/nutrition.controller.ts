@@ -50,6 +50,18 @@ class NutritionController {
     },
   );
 
+  public getNutritionHistory = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const { nutritionHistoryId } = req.params;
+      const nutritionHistory = await this.nutritionService.getNutritionHistory(nutritionHistoryId);
+      res
+        .status(status.OK)
+        .json(
+          apiResponse(status.OK, "OK", "Nutrition history successfully found", nutritionHistory),
+        );
+    },
+  );
+
   public createNutritionHistory = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
       const userId = req.user?.user_id;
@@ -68,6 +80,28 @@ class NutritionController {
             createdNutritionHistory,
           ),
         );
+    },
+  );
+
+  public updateNutritionHistory = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const { nutritionHistoryId } = req.params;
+      const nutritionHistoryData = req.body;
+      console.log("controller nutritionHistoryData", nutritionHistoryData);
+      await this.nutritionService.updateNutritionHistory(nutritionHistoryId, nutritionHistoryData);
+      res
+        .status(status.OK)
+        .json(apiResponse(status.OK, "OK", "Nutrition history successfully updated"));
+    },
+  );
+
+  public deleteNutritionHistory = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const { nutritionHistoryId } = req.params;
+      await this.nutritionService.deleteNutritionHistory(nutritionHistoryId);
+      res
+        .status(status.OK)
+        .json(apiResponse(status.OK, "OK", "Nutrition history successfully deleted"));
     },
   );
 }

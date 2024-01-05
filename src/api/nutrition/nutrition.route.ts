@@ -1,7 +1,13 @@
 import { Router } from "express";
 import NutritionController from "./nutrition.controller";
 import validationMiddleware from "@/middlewares/validation.middleware";
-import { CreateNutritionHistoryDto, GetChildrenQueryDto } from "@/dtos/nutrition.dto";
+import {
+  CreateNutritionHistoryDto,
+  UpdateNutritionHistoryDto,
+  GetChildrenQueryDto,
+  NutritionHistoryIdParamDto,
+  ChildrenIdParamDto,
+} from "@/dtos/nutrition.dto";
 import { RouteInterface } from "@/interfaces/routes.interface";
 import { authenticate } from "@/middlewares/authentication.middleware";
 import { authorize } from "@/middlewares/authorization.middleware";
@@ -28,6 +34,7 @@ class NutritionRoute implements RouteInterface {
       `${this.path}/children/:childId`,
       authenticate,
       authorize([ADMIN, DOCTOR]),
+      validationMiddleware(ChildrenIdParamDto, "params"),
       this.nutritionController.getChildren,
     );
     this.router.get(
@@ -35,11 +42,33 @@ class NutritionRoute implements RouteInterface {
       authenticate,
       this.nutritionController.getUserNutritionHistories,
     );
+    this.router.get(
+      `${this.path}/:nutritionHistoryId`,
+      authenticate,
+      authorize([ADMIN, DOCTOR]),
+      validationMiddleware(NutritionHistoryIdParamDto, "params"),
+      this.nutritionController.getNutritionHistory,
+    );
     this.router.post(
       `${this.path}`,
       authenticate,
       validationMiddleware(CreateNutritionHistoryDto, "body"),
       this.nutritionController.createNutritionHistory,
+    );
+    this.router.put(
+      `${this.path}/:nutritionHistoryId`,
+      authenticate,
+      authorize([ADMIN, DOCTOR]),
+      validationMiddleware(NutritionHistoryIdParamDto, "params"),
+      validationMiddleware(UpdateNutritionHistoryDto, "body"),
+      this.nutritionController.updateNutritionHistory,
+    );
+    this.router.delete(
+      `${this.path}/:nutritionHistoryId`,
+      authenticate,
+      authorize([ADMIN, DOCTOR]),
+      validationMiddleware(NutritionHistoryIdParamDto, "params"),
+      this.nutritionController.deleteNutritionHistory,
     );
   }
 }

@@ -11,6 +11,7 @@ export interface NutritionHistoryInterface {
   weight: number;
   bmi: number;
   weight_category: string;
+  age_in_month?: number;
   creator_id?: string;
   creator?: UserModel;
   created_at: Date;
