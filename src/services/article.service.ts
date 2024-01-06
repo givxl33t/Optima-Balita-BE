@@ -95,7 +95,7 @@ class ArticleService {
           {
             model: this.users,
             as: "author",
-            attributes: ["username"],
+            attributes: ["username", "profile"],
           },
         ],
         where: whereClause,
@@ -123,7 +123,7 @@ class ArticleService {
           {
             model: this.users,
             as: "author",
-            attributes: ["username"],
+            attributes: ["username", "profile"],
           },
         ],
         where: whereClause,
@@ -255,7 +255,7 @@ class ArticleService {
   public mappedArticles = (articles: ArticleInterface[]): MappedArticleInterface[] => {
     return articles.map((article) => {
       const { author } = article;
-      const { username } = author;
+      const { username, profile } = author;
       delete article.author_id;
       return {
         id: article.id,
@@ -265,6 +265,7 @@ class ArticleService {
         content: article.content,
         image: article.image,
         author: username,
+        author_profile: profile,
         created_at: article.created_at,
       };
     });

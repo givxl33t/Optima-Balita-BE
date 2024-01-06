@@ -112,6 +112,10 @@ class NutritionService {
       order: [["created_at", "DESC"]],
     });
 
+    if (children.length === 0) {
+      throw new HttpExceptionBadRequest("Children not found");
+    }
+
     return this.mappedChildren(children);
   };
 
@@ -142,8 +146,6 @@ class NutritionService {
     if (!nutritionHistory) throw new HttpExceptionBadRequest("Nutrition History not found");
 
     const ageInMonth = this.convertAgeToMonth(nutritionHistory.age_text);
-
-    if (!nutritionHistory) throw new HttpExceptionBadRequest("Nutrition History not found");
 
     return {
       ...nutritionHistory.toJSON(),
