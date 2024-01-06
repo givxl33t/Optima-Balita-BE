@@ -1,5 +1,5 @@
 import DB from "@/config/database";
-import { CreateNutritionHistoryDto } from "@/dtos/nutrition.dto";
+import { CreateNutritionHistoryDto, UpdateNutritionHistoryDto } from "@/dtos/nutrition.dto";
 import {
   NutritionHistoryInterface,
   MappedChildrenInterface,
@@ -8,6 +8,9 @@ import {
 } from "@/interfaces/nutrition.interface";
 import sequelize from "sequelize";
 import { metaBuilder } from "@/utils/pagination.utils";
+import { HttpExceptionBadRequest } from "@/exceptions/HttpException";
+import BoysBMIZscoreDataset from "@/utils/dataset/boysBMIZscoreDataset.utils";
+import GirlsBMIZscoreDataset from "@/utils/dataset/girlsBMIZscoreDataset.utils";
 
 class NutritionService {
   public nutritionHistories = DB.NutritionHistoryModel;
@@ -132,20 +135,139 @@ class NutritionService {
     return nutritionHistories;
   };
 
+  public getNutritionHistory = async (
+    nutritionHistoryId: string,
+  ): Promise<NutritionHistoryInterface> => {
+    const nutritionHistory = await this.nutritionHistories.findByPk(nutritionHistoryId);
+    if (!nutritionHistory) throw new HttpExceptionBadRequest("Nutrition History not found");
+
+    const ageInMonth = this.convertAgeToMonth(nutritionHistory.age_text);
+
+    if (!nutritionHistory) throw new HttpExceptionBadRequest("Nutrition History not found");
+
+    return {
+      ...nutritionHistory.toJSON(),
+      age_in_month: ageInMonth,
+    };
+  };
+
   public createNutritionHistory = async (
     nutritionHistoryData: CreateNutritionHistoryDto,
     creatorId: string,
   ): Promise<NutritionHistoryInterface> => {
+    let bmi = 0;
+    let bmiCategory = "No Data";
+
     const childId = `${creatorId}-${nutritionHistoryData.child_name.replace(/\s/g, "")}-${
       nutritionHistoryData.gender === "Laki-laki" ? "L" : "P"
     }`;
+
+    const ageInMonth = this.convertAgeToMonth(nutritionHistoryData.age_text);
+
+    if (ageInMonth >= 0 && ageInMonth <= 60) {
+      bmi = nutritionHistoryData.weight / Math.pow(nutritionHistoryData.height / 100, 2);
+      bmiCategory = this.bmiCategoryDecider(bmi, nutritionHistoryData.gender, ageInMonth);
+    }
 
     const nutritionHistory = await this.nutritionHistories.create({
       ...nutritionHistoryData,
       child_id: childId,
       creator_id: creatorId,
+      bmi: bmi.toFixed(2),
+      weight_category: bmiCategory,
     });
     return nutritionHistory;
+  };
+
+  public updateNutritionHistory = async (
+    nutritionHistoryId: string,
+    nutritionHistoryData: UpdateNutritionHistoryDto,
+  ): Promise<void> => {
+    let bmi = 0;
+    let bmiCategory = "No Data";
+
+    const existingNutritionHistory = await this.nutritionHistories.findByPk(nutritionHistoryId);
+    if (!existingNutritionHistory) throw new HttpExceptionBadRequest("Nutrition History not found");
+
+    const years = Math.floor(nutritionHistoryData.age_in_month / 12);
+    const remainingMonths = nutritionHistoryData.age_in_month % 12;
+    const ageText =
+      years > 0 ? `${years} tahun ${remainingMonths} bulan` : `${remainingMonths} bulan`;
+
+    if (nutritionHistoryData.age_in_month >= 0 && nutritionHistoryData.age_in_month <= 60) {
+      bmi = nutritionHistoryData.weight / Math.pow(nutritionHistoryData.height / 100, 2);
+      bmiCategory = this.bmiCategoryDecider(
+        bmi,
+        existingNutritionHistory.gender,
+        Number(nutritionHistoryData.age_in_month),
+      );
+    }
+
+    await this.nutritionHistories.update(
+      {
+        ...nutritionHistoryData,
+        bmi: bmi.toFixed(2),
+        weight_category: bmiCategory,
+        age_text: ageText,
+      },
+      {
+        where: { id: nutritionHistoryId },
+      },
+    );
+  };
+
+  public deleteNutritionHistory = async (nutritionHistoryId: string): Promise<void> => {
+    const existingNutritionHistory = await this.nutritionHistories.findByPk(nutritionHistoryId);
+    if (!existingNutritionHistory) throw new HttpExceptionBadRequest("Nutrition History not found");
+
+    await this.nutritionHistories.destroy({ where: { id: nutritionHistoryId } });
+  };
+
+  private bmiCategoryDecider = (bmi: number, gender: string, ageInMonth: number): string => {
+    const dataset = gender === "Laki-laki" ? BoysBMIZscoreDataset : GirlsBMIZscoreDataset;
+    const bmiStandards = dataset.find((data) => data.Month === ageInMonth);
+
+    if (bmiStandards) {
+      const { SD3neg, SD2neg, SD1neg, SD0, SD1, SD2, SD3 } = bmiStandards;
+
+      if (bmi <= SD3neg) {
+        return "Severely Wasted";
+      } else if (bmi > SD3neg && bmi <= SD2neg) {
+        return "Wasted";
+      } else if (bmi > SD2neg && bmi <= SD1neg) {
+        return "Normal";
+      } else if (bmi > SD1neg && bmi <= SD0) {
+        return "Normal";
+      } else if (bmi > SD0 && bmi <= SD1) {
+        return "Normal";
+      } else if (bmi > SD1 && bmi <= SD2) {
+        return "Overweight";
+      } else if (bmi > SD2 && bmi <= SD3) {
+        return "Overweight";
+      } else {
+        return "Obese";
+      }
+    }
+
+    return "No Data";
+  };
+
+  private convertAgeToMonth = (ageText: string): number => {
+    let ageInMonths;
+
+    const matchWithYears = ageText.match(/(\d+)\s*tahun\s*(\d*)\s*bulan/);
+    const matchWithoutYears = ageText.match(/(\d+)\s*bulan/);
+
+    if (matchWithYears) {
+      const years = parseInt(matchWithYears[1], 10);
+      const months = parseInt(matchWithYears[2], 10);
+      ageInMonths = years * 12 + months;
+    } else if (matchWithoutYears) {
+      const months = parseInt(matchWithoutYears[1], 10);
+      ageInMonths = months;
+    }
+
+    return ageInMonths;
   };
 
   public mappedChildren = (
@@ -164,20 +286,38 @@ class NutritionService {
       };
     });
 
+    mappedNutritionHistories.sort((a, b) => {
+      if (this.convertAgeToMonth(a.age_text) < this.convertAgeToMonth(b.age_text)) {
+        return -1;
+      } else if (this.convertAgeToMonth(a.age_text) > this.convertAgeToMonth(b.age_text)) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+
+    const latestNutritionHistory = mappedNutritionHistories.reduce((r, a) => {
+      if (this.convertAgeToMonth(a.age_text) > this.convertAgeToMonth(r.age_text)) {
+        return a;
+      } else {
+        return r;
+      }
+    });
+
     const mappedChild = {
       id: nutritionHistories[0].child_id,
       child_name: nutritionHistories[0].child_name as string,
       gender: nutritionHistories[0].gender as string,
-      latest_age: mappedNutritionHistories[0].age_text,
-      latest_height: mappedNutritionHistories[0].height,
-      latest_weight: mappedNutritionHistories[0].weight,
-      latest_bmi: mappedNutritionHistories[0].bmi,
-      latest_weight_category: mappedNutritionHistories[0].weight_category,
+      latest_age: latestNutritionHistory.age_text,
+      latest_height: latestNutritionHistory.height,
+      latest_weight: latestNutritionHistory.weight,
+      latest_bmi: latestNutritionHistory.bmi,
+      latest_weight_category: latestNutritionHistory.weight_category,
       nutrition_histories: mappedNutritionHistories,
       creator_id: nutritionHistories[0].creator_id,
       creator_username: nutritionHistories[0].creator?.username as string,
       creator_profile: nutritionHistories[0].creator?.profile as string,
-      created_at: mappedNutritionHistories[0].created_at,
+      created_at: latestNutritionHistory.created_at,
     };
 
     return mappedChild;
@@ -194,7 +334,11 @@ class NutritionService {
     const mappedNutritionHistories = Object.keys(groupedNutritionHistories).map((key) => {
       const nutritionHistory = groupedNutritionHistories[key];
       const latestNutritionHistory = nutritionHistory.reduce((r, a) => {
-        return r.created_at > a.created_at ? r : a;
+        if (this.convertAgeToMonth(a.age_text) > this.convertAgeToMonth(r.age_text)) {
+          return a;
+        } else {
+          return r;
+        }
       });
 
       return {
