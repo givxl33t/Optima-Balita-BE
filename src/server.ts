@@ -4,6 +4,7 @@ import UserRoute from "@api/user/user.route";
 import ArticleRoute from "@api/article/article.route";
 import ForumRoute from "./api/forum/forum.route";
 import NutritionRoute from "./api/nutrition/nutrition.route";
+import ConsultationRoute from "./api/consultation/consultation.route";
 
 const app = new App([
   new AuthRoute(),
@@ -11,6 +12,7 @@ const app = new App([
   new ForumRoute(),
   new NutritionRoute(),
   new UserRoute(),
+  new ConsultationRoute(),
 ]);
 
 app.listen();

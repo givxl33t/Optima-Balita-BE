@@ -10,6 +10,7 @@ export interface ArticleInterface {
   author_id?: string;
   author: {
     username: string;
+    profile: string;
   };
   created_at: Date;
 }
@@ -22,6 +23,7 @@ export interface MappedArticleInterface {
   content: string;
   image: string;
   author: string;
+  author_profile: string;
   created_at: Date;
 }
 

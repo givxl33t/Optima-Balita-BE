@@ -4,7 +4,7 @@ import { NODE_ENV } from "@/utils/constant.utils";
 
 const limiterMiddleware = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: NODE_ENV === "test" ? 9999 : 100, // limit each IP to 100 requests per windowMs
+  max: NODE_ENV === "test" ? 9999 : NODE_ENV === "development" ? 9999 : 500, // limit each IP to 500 requests per windowMs
   keyGenerator: (req) => {
     return ((req.ip as string) + req.headers["user-agent"]) as string;
   },
