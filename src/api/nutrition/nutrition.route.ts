@@ -7,6 +7,7 @@ import {
   GetChildrenQueryDto,
   NutritionHistoryIdParamDto,
   ChildrenIdParamDto,
+  UpdateChildrenDto,
 } from "@/dtos/nutrition.dto";
 import { RouteInterface } from "@/interfaces/routes.interface";
 import { authenticate } from "@/middlewares/authentication.middleware";
@@ -36,6 +37,21 @@ class NutritionRoute implements RouteInterface {
       authorize([ADMIN, DOCTOR]),
       validationMiddleware(ChildrenIdParamDto, "params"),
       this.nutritionController.getChildren,
+    );
+    this.router.put(
+      `${this.path}/children/:childId`,
+      authenticate,
+      authorize([ADMIN, DOCTOR]),
+      validationMiddleware(ChildrenIdParamDto, "params"),
+      validationMiddleware(UpdateChildrenDto, "body"),
+      this.nutritionController.updateChildren,
+    );
+    this.router.delete(
+      `${this.path}/children/:childId`,
+      authenticate,
+      authorize([ADMIN, DOCTOR]),
+      validationMiddleware(ChildrenIdParamDto, "params"),
+      this.nutritionController.deleteChildren,
     );
     this.router.get(
       `${this.path}/me`,

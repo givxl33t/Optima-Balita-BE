@@ -47,6 +47,37 @@ class ArticleService {
     return this.mappedArticles([article])[0];
   };
 
+  public getArticleBySlug = async (slug: string): Promise<MappedArticleInterface> => {
+    const article = await this.articles.findOne({
+      attributes: [
+        "id",
+        "slug",
+        "title",
+        "description",
+        "content",
+        "image",
+        "author_id",
+        "created_at",
+      ],
+      include: [
+        {
+          model: this.users,
+          as: "author",
+          attributes: ["username"],
+        },
+      ],
+      where: {
+        slug,
+      },
+    });
+
+    if (!article) {
+      throw new HttpExceptionBadRequest("Article not found");
+    }
+
+    return this.mappedArticles([article])[0];
+  };
+
   public getArticles = async (
     offset: number,
     limit: number,

@@ -82,6 +82,20 @@ export class UpdateNutritionHistoryDto {
   public weight: number;
 }
 
+export class UpdateChildrenDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: "Child Name Required" })
+  @MaxLength(255)
+  public child_name: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: "Gender Required" })
+  @IsIn([...Object.values(Gender)])
+  public gender: string;
+}
+
 export class ChildrenIdParamDto {
   @IsString()
   @IsNotEmpty({ message: "Children ID Required" })

@@ -42,6 +42,12 @@ export class ArticleIdParamDto {
   public articleId: string;
 }
 
+export class ArticleSlugParamDto {
+  @IsString()
+  @IsNotEmpty({ message: "Article Slug Required" })
+  public slug: string;
+}
+
 export class UpdateArticleDto extends CreateArticleDto {
   @IsOptional()
   public title: string;
