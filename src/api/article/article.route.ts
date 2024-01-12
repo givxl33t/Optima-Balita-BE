@@ -7,6 +7,7 @@ import {
   CreateArticleDto,
   UpdateArticleDto,
   ArticleIdParamDto,
+  ArticleSlugParamDto,
 } from "@/dtos/article.dto";
 import { RouteInterface } from "@/interfaces/routes.interface";
 import { authenticate } from "@/middlewares/authentication.middleware";
@@ -25,6 +26,11 @@ class ArticleRoute implements RouteInterface {
       `${this.path}/:articleId`,
       validationMiddleware(ArticleIdParamDto, "params"),
       this.articleController.getArticle,
+    );
+    this.router.get(
+      `${this.path}/slug/:slug`,
+      validationMiddleware(ArticleSlugParamDto, "params"),
+      this.articleController.getArticleBySlug,
     );
     this.router.get(
       `${this.path}`,

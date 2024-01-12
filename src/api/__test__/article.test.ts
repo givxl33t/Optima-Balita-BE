@@ -69,6 +69,34 @@ describe("articles endpoint", () => {
     });
   });
 
+  describe("when GET /api/article/slug/:slug", () => {
+    const articleData: CreateArticleDto = {
+      title: "test title",
+      description: "test description",
+      content: "test content",
+    };
+
+    it("should response 200 and returned an article", async () => {
+      const article = await request(app.getServer())
+        .post("/api/article")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(articleData);
+
+      const res = await request(app.getServer())
+        .get(`/api/article/slug/${article.body.data.slug}`)
+        .expect(200);
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data.title).toEqual(articleData.title);
+      expect(res.body.data.description).toEqual(articleData.description);
+      expect(res.body.data.content).toEqual(articleData.content);
+    });
+
+    it("should response 400 if article is not found", async () => {
+      const res = await request(app.getServer()).get(`/api/article/slug/${uuidv4()}`).expect(400);
+      expect(res.body.message).toEqual("Article not found");
+    });
+  });
+
   describe("when GET /api/article", () => {
     const page = 1;
     const limit = 3;

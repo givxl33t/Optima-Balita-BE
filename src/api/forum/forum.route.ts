@@ -32,7 +32,6 @@ class ForumRoute implements RouteInterface {
     );
     this.router.get(
       `${this.path}`,
-      authenticate,
       validationMiddleware(GetDiscussionsQueryDto, "query"),
       this.forumController.getDiscussions,
     );

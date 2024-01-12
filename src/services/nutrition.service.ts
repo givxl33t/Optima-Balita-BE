@@ -1,5 +1,9 @@
 import DB from "@/config/database";
-import { CreateNutritionHistoryDto, UpdateNutritionHistoryDto } from "@/dtos/nutrition.dto";
+import {
+  CreateNutritionHistoryDto,
+  UpdateNutritionHistoryDto,
+  UpdateChildrenDto,
+} from "@/dtos/nutrition.dto";
 import {
   NutritionHistoryInterface,
   MappedChildrenInterface,
@@ -117,6 +121,41 @@ class NutritionService {
     }
 
     return this.mappedChildren(children);
+  };
+
+  public updateChildren = async (childId: string, childData: UpdateChildrenDto): Promise<void> => {
+    const existingChildren = await this.nutritionHistories.findAll({
+      where: { child_id: childId },
+    });
+    if (existingChildren.length === 0) {
+      throw new HttpExceptionBadRequest("Children not found");
+    }
+
+    const newChildId = `${existingChildren[0].creator_id}-${childData.child_name.replace(
+      /\s/g,
+      "",
+    )}-${childData.gender === "Laki-laki" ? "L" : "P"}`;
+
+    await this.nutritionHistories.update(
+      {
+        ...childData,
+        child_id: newChildId,
+      },
+      {
+        where: { child_id: childId },
+      },
+    );
+  };
+
+  public deleteChildren = async (childId: string): Promise<void> => {
+    const existingChildren = await this.nutritionHistories.findAll({
+      where: { child_id: childId },
+    });
+    if (existingChildren.length === 0) {
+      throw new HttpExceptionBadRequest("Children not found");
+    }
+
+    await this.nutritionHistories.destroy({ where: { child_id: childId } });
   };
 
   public getUserNutritionHistories = async (userId): Promise<NutritionHistoryInterface[]> => {

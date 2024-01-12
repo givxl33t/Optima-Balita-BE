@@ -109,18 +109,6 @@ describe("forum endpoint", () => {
       expect(res.body.meta.total_data).toEqual(8);
     });
 
-    it("should response 401 if token is not provided", async () => {
-      const res = await request(app.getServer()).get("/api/forum").expect(401);
-      expect(res.body.message).toEqual("Authorization Header missing.");
-    });
-
-    it("should response 401 if token is invalid", async () => {
-      const res = await request(app.getServer())
-        .get("/api/forum")
-        .set("Authorization", "Bearer invalid_token");
-      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
-    });
-
     it("should response 422 if option is invalid", async () => {
       const res = await request(app.getServer())
         .get("/api/forum?option=INVALIDOPTION")

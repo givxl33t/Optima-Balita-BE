@@ -33,6 +33,23 @@ class NutritionController {
     },
   );
 
+  public updateChildren = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const childId = req.params.childId;
+      const childrenData = req.body;
+      await this.nutritionService.updateChildren(childId, childrenData);
+      res.status(status.OK).json(apiResponse(status.OK, "OK", "Children successfully updated"));
+    },
+  );
+
+  public deleteChildren = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const childId = req.params.childId;
+      await this.nutritionService.deleteChildren(childId);
+      res.status(status.OK).json(apiResponse(status.OK, "OK", "Children successfully deleted"));
+    },
+  );
+
   public getUserNutritionHistories = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
       const userId = req.user?.user_id;

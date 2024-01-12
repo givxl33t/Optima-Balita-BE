@@ -16,6 +16,16 @@ class ArticleController {
     res.status(status.OK).json(apiResponse(status.OK, "OK", "Article successfully found", article));
   });
 
+  public getArticleBySlug = expressAsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const { slug } = req.params;
+      const article = await this.articleService.getArticleBySlug(slug);
+      res
+        .status(status.OK)
+        .json(apiResponse(status.OK, "OK", "Article successfully found", article));
+    },
+  );
+
   public getArticles = expressAsyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { limit, page, filter, sort } = req.query;
     const offset: number = (Number(page) - 1) * Number(limit);

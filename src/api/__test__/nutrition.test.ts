@@ -115,6 +115,116 @@ describe("nutrition endpoint", () => {
     });
   });
 
+  describe("when PUT /api/bmi/children/:childId", () => {
+    let childId;
+
+    const nutritionHistoryData = {
+      child_name: "Test Child",
+      age_text: "1 tahun 11 bulan",
+      height: "100",
+      weight: "20",
+      bmi: "15.32",
+      weight_category: "Underweight",
+      gender: "Laki-laki",
+    };
+
+    beforeAll(async () => {
+      const res = await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(nutritionHistoryData);
+
+      childId = res.body.data.child_id;
+    });
+
+    it("should response 200 and updated child", async () => {
+      const res = await request(app.getServer())
+        .put(`/api/bmi/children/${childId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ child_name: "Test Child 2" })
+        .expect(200);
+
+      expect(res.body.message).toEqual("Children successfully updated");
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer())
+        .put("/api/bmi/children/1")
+        .send(nutritionHistoryData)
+        .expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .get(`/api/bmi/children/${childId}`)
+        .set("Authorization", "Bearer invalid_token");
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+
+    it("should response 400 if child not found", async () => {
+      const res = await request(app.getServer())
+        .put(`/api/bmi/children/${uuidv4()}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ child_name: "Test Child 2" })
+        .expect(400);
+      expect(res.body.message).toEqual("Children not found");
+    });
+  });
+
+  describe("when DELETE /api/bmi/children/:childId", () => {
+    let childId;
+
+    const nutritionHistoryData = {
+      child_name: "Test Child",
+      age_text: "1 tahun 11 bulan",
+      height: "100",
+      weight: "20",
+      bmi: "15.32",
+      weight_category: "Underweight",
+      gender: "Laki-laki",
+    };
+
+    beforeAll(async () => {
+      const res = await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send(nutritionHistoryData);
+
+      childId = res.body.data.child_id;
+    });
+
+    it("should response 200 and deleted child", async () => {
+      const res = await request(app.getServer())
+        .delete(`/api/bmi/children/${childId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.message).toEqual("Children successfully deleted");
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer()).delete("/api/bmi/children/1").expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .delete(`/api/bmi/children/${childId}`)
+        .set("Authorization", "Bearer invalid_token")
+        .expect(401);
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+
+    it("should response 400 if child not found", async () => {
+      const res = await request(app.getServer())
+        .delete(`/api/bmi/children/${uuidv4()}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(400);
+      expect(res.body.message).toEqual("Children not found");
+    });
+  });
+
   describe("when GET /api/bmi/me", () => {
     let secondAccessToken;
 
@@ -156,7 +266,7 @@ describe("nutrition endpoint", () => {
         .expect(200);
 
       expect(res1.body.data).toBeDefined();
-      expect(res1.body.data).toHaveLength(2);
+      expect(res1.body.data).toHaveLength(3);
 
       const res2 = await request(app.getServer())
         .get("/api/bmi/me")
