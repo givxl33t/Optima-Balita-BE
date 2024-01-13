@@ -5,6 +5,7 @@ import { RouteInterface } from "@/interfaces/routes.interface";
 import { RegisterUserDto, LoginUserDto, TokenManageDto } from "@/dtos/auth.dto";
 import { UpdateProfileDto } from "@/dtos/user.dto";
 import { authenticate } from "@/middlewares/authentication.middleware";
+import { uploadImage } from "@/middlewares/multer.middleware";
 
 class AuthRoute implements RouteInterface {
   public path = "/auth";
@@ -40,6 +41,7 @@ class AuthRoute implements RouteInterface {
     this.router.put(
       `${this.path}/profile`,
       authenticate,
+      uploadImage.single("profile"),
       validationMiddleware(UpdateProfileDto, "body"),
       this.authController.updateProfile,
     );
