@@ -48,9 +48,10 @@ class AuthController {
 
   public updateProfile = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
-      const tokenPayload = req.user;
       const userData: UpdateProfileDto = req.body;
-      await this.userService.updateUser(userData, tokenPayload?.user_id);
+      const currentUserId = req.user?.user_id;
+      const profileImageFile = req.file?.buffer;
+      await this.userService.updateUser(userData, currentUserId, profileImageFile);
       res.status(status.OK).json(apiResponse(status.OK, "OK", "User successfully updated"));
     },
   );

@@ -8,6 +8,12 @@ import { HttpExceptionBadRequest } from "@/exceptions/HttpException";
 import { UpdateUserDto } from "@/dtos/user.dto";
 import { metaBuilder } from "@/utils/pagination.utils";
 import { Op } from "sequelize";
+import PasswordHasher from "@/utils/passwordHasher.utils";
+import { UploadApiOptions } from "cloudinary";
+import { CLOUDINARY_CLOUD_NAME } from "@/utils/constant.utils";
+import { v4 as uuidv4 } from "uuid";
+import cloudinary from "@/config/cloudinary";
+import { extractPublicId } from "cloudinary-build-url";
 
 class UserService {
   public users = DB.UserModel;
@@ -96,11 +102,55 @@ class UserService {
     }
   };
 
-  public updateUser = async (userData: UpdateUserDto, userId: string): Promise<void> => {
-    const findUser = await this.users.findOne({
+  public updateUser = async (
+    userData: UpdateUserDto,
+    userId: string,
+    profileImageFile?: Buffer,
+  ): Promise<void> => {
+    const existingUser = await this.users.findOne({
       where: { id: userId },
     });
-    if (!findUser) throw new HttpExceptionBadRequest("User not found");
+    if (!existingUser) throw new HttpExceptionBadRequest("User not found");
+
+    if (userData.current_password && userData.password) {
+      const isPasswordMatch = await PasswordHasher.comparePassword(
+        userData.current_password,
+        existingUser.password,
+      );
+      if (!isPasswordMatch) throw new HttpExceptionBadRequest("Invalid password");
+
+      const hashedPassword = await PasswordHasher.hashPassword(userData.password as string);
+      userData.password = hashedPassword;
+    }
+
+    if (profileImageFile) {
+      let options: UploadApiOptions;
+
+      if (existingUser.profile.includes(CLOUDINARY_CLOUD_NAME as string)) {
+        const publicId = extractPublicId(existingUser.profile);
+        options = { public_id: publicId, invalidate: true };
+      } else {
+        options = { public_id: `user_${uuidv4()}`, folder: "user" };
+      }
+
+      await new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(options, async (error, result) => {
+            if (error) {
+              reject(new HttpExceptionBadRequest(error.message));
+            } else {
+              const update = await this.users.update(
+                { ...userData, profile: result?.secure_url },
+                {
+                  where: { id: userId },
+                },
+              );
+              resolve(update);
+            }
+          })
+          .end(profileImageFile);
+      });
+    }
 
     await this.users.update(
       { ...userData },
