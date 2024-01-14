@@ -428,6 +428,11 @@ class ForumService {
       const poster_profile = discussion.poster.profile;
       const poster_role = discussion.poster.roles[0].name;
       if (commentOption === "WITHCOMMENT" && discussion.comments) {
+        // order comments by created_at descending
+        discussion.comments.sort((a, b) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+
         const mappedComments: MappedCommentInterface[] = discussion.comments.map((comment) => {
           const commenter_username = comment.commenter.username;
           const commenter_profile = comment.commenter.profile;
