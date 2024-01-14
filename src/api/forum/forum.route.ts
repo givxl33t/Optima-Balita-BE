@@ -25,15 +25,21 @@ class ForumRoute implements RouteInterface {
 
   private initializeRoutes(): void {
     this.router.get(
+      `${this.path}`,
+      authenticate,
+      validationMiddleware(GetDiscussionsQueryDto, "query"),
+      this.forumController.getDiscussions,
+    );
+    this.router.get(
+      `${this.path}/landing`,
+      validationMiddleware(GetDiscussionsQueryDto, "query"),
+      this.forumController.getDiscussions,
+    );
+    this.router.get(
       `${this.path}/:discussionId`,
       authenticate,
       validationMiddleware(DiscussionIdParamDto, "params"),
       this.forumController.getDiscussion,
-    );
-    this.router.get(
-      `${this.path}`,
-      validationMiddleware(GetDiscussionsQueryDto, "query"),
-      this.forumController.getDiscussions,
     );
     this.router.post(
       `${this.path}`,
