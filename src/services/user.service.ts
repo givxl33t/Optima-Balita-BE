@@ -112,6 +112,13 @@ class UserService {
     });
     if (!existingUser) throw new HttpExceptionBadRequest("User not found");
 
+    if (userData.email) {
+      const findUser = await this.users.findOne({
+        where: { email: userData.email },
+      });
+      if (findUser) throw new HttpExceptionBadRequest("Email already taken");
+    }
+
     if (userData.current_password && userData.password) {
       const isPasswordMatch = await PasswordHasher.comparePassword(
         userData.current_password,

@@ -17,6 +17,7 @@ import { HttpExceptionBadRequest, HttpExceptionForbidden } from "@/exceptions/Ht
 import sequelize from "sequelize";
 import { metaBuilder } from "@/utils/pagination.utils";
 import { UserInterface } from "@/interfaces/user.interface";
+import { getRoleNameFromUserId } from "@/utils/role.utils";
 
 class ForumService {
   public discussions = DB.DiscussionModel;
@@ -216,7 +217,8 @@ class ForumService {
     const existingDiscussion = await this.discussions.findByPk(discussionId);
     if (!existingDiscussion) throw new HttpExceptionBadRequest("Discussion not found.");
 
-    if (existingDiscussion.poster_id !== posterId)
+    const roleName = await getRoleNameFromUserId(posterId);
+    if (roleName !== "ADMIN" && existingDiscussion.poster_id !== posterId)
       throw new HttpExceptionForbidden("You are not the poster.");
 
     await this.discussions.update(discussionData, { where: { id: discussionId } });
@@ -226,7 +228,8 @@ class ForumService {
     const existingDiscussion = await this.discussions.findByPk(discussionId);
     if (!existingDiscussion) throw new HttpExceptionBadRequest("Discussion not found.");
 
-    if (existingDiscussion.poster_id !== posterId)
+    const roleName = await getRoleNameFromUserId(posterId);
+    if (roleName !== "ADMIN" && existingDiscussion.poster_id !== posterId)
       throw new HttpExceptionForbidden("You are not the poster.");
 
     await this.discussions.destroy({ where: { id: discussionId } });
@@ -360,7 +363,8 @@ class ForumService {
     const existingComment = await this.comments.findByPk(commentId);
     if (!existingComment) throw new HttpExceptionBadRequest("Comment not found.");
 
-    if (existingComment.commenter_id !== commenterId)
+    const roleName = await getRoleNameFromUserId(commenterId);
+    if (roleName !== "ADMIN" && existingComment.commenter_id !== commenterId)
       throw new HttpExceptionForbidden("You are not the commenter.");
 
     await this.comments.update(commentData, { where: { id: commentId } });
@@ -370,7 +374,8 @@ class ForumService {
     const existingComment = await this.comments.findByPk(commentId);
     if (!existingComment) throw new HttpExceptionBadRequest("Comment not found.");
 
-    if (existingComment.commenter_id !== commenterId)
+    const roleName = await getRoleNameFromUserId(commenterId);
+    if (roleName !== "ADMIN" && existingComment.commenter_id !== commenterId)
       throw new HttpExceptionForbidden("You are not the commenter.");
 
     await this.comments.destroy({ where: { id: commentId } });
