@@ -117,7 +117,6 @@ class UserService {
         where: { email: userData.email },
       });
 
-      // check userId if same with findUser.id
       if (findUser && findUser.id !== userId)
         throw new HttpExceptionBadRequest("Email already exists");
     }
