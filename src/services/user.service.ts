@@ -116,7 +116,10 @@ class UserService {
       const findUser = await this.users.findOne({
         where: { email: userData.email },
       });
-      if (findUser) throw new HttpExceptionBadRequest("Email already taken");
+
+      // check userId if same with findUser.id
+      if (findUser && findUser.id !== userId)
+        throw new HttpExceptionBadRequest("Email already exists");
     }
 
     if (userData.current_password && userData.password) {
