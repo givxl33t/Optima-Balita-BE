@@ -14,6 +14,7 @@ import cloudinary from "@/config/cloudinary";
 import { extractPublicId } from "cloudinary-build-url";
 import { CLOUDINARY_CLOUD_NAME } from "@/utils/constant.utils";
 import { UploadApiOptions } from "cloudinary";
+import { getRoleNameFromUserId } from "@/utils/role.utils";
 
 class ArticleService {
   public articles = DB.ArticleModel;
@@ -212,7 +213,9 @@ class ArticleService {
     if (!existingArticle) {
       throw new HttpExceptionBadRequest("Article not found");
     }
-    if (existingArticle.author_id !== authorId) {
+
+    const roleName = await getRoleNameFromUserId(authorId);
+    if (roleName !== "ADMIN" && existingArticle.author_id !== authorId) {
       throw new HttpExceptionForbidden("You are not the author of this article");
     }
 
@@ -271,7 +274,9 @@ class ArticleService {
     if (!existingArticle) {
       throw new HttpExceptionBadRequest("Article not found");
     }
-    if (existingArticle.author_id !== authorId) {
+
+    const roleName = await getRoleNameFromUserId(authorId);
+    if (roleName !== "ADMIN" && existingArticle.author_id !== authorId) {
       throw new HttpExceptionForbidden("You are not the author of this article");
     }
 
