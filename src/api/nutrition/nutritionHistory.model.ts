@@ -9,7 +9,9 @@ export class NutritionHistoryModel extends Model {
   public height!: number;
   public weight!: number;
   public bmi!: number;
+  public height_category!: string;
   public weight_category!: string;
+  public mass_category!: string;
   public gender!: string;
   public creator_id!: string;
 
@@ -64,8 +66,18 @@ export default function (sequelize: Sequelize): typeof NutritionHistoryModel {
         type: DataTypes.FLOAT,
         allowNull: false,
       },
+      height_category: {
+        type: DataTypes.STRING(256),
+        defaultValue: "No Data",
+        allowNull: false,
+      },
       weight_category: {
         type: DataTypes.STRING(256),
+        allowNull: false,
+      },
+      mass_category: {
+        type: DataTypes.STRING(256),
+        defaultValue: "No Data",
         allowNull: false,
       },
       gender: {

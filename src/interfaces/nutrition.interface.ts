@@ -10,6 +10,8 @@ export interface NutritionHistoryInterface {
   height: number;
   weight: number;
   bmi: number;
+  height_category: string;
+  mass_category: string;
   weight_category: string;
   age_in_month?: number;
   creator_id?: string;
@@ -22,6 +24,8 @@ export interface MappedChildrenInterface {
   latest_height: number;
   latest_weight: number;
   latest_bmi: number;
+  latest_height_category: string;
+  latest_mass_category: string;
   latest_weight_category: string;
   creator_username: string;
   creator_profile: string;
@@ -36,6 +40,8 @@ export interface MappedChildInterface {
   latest_height: number;
   latest_weight: number;
   latest_bmi: number;
+  latest_height_category: string;
+  latest_mass_category: string;
   latest_weight_category: string;
   nutrition_histories: NutritionHistoryInterface[];
   creator_id?: string;
