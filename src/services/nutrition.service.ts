@@ -13,6 +13,10 @@ import {
 import sequelize from "sequelize";
 import { metaBuilder } from "@/utils/pagination.utils";
 import { HttpExceptionBadRequest } from "@/exceptions/HttpException";
+import BoysLengthZScoreDataset from "@/utils/dataset/boysLengthZScoreDataset.utils";
+import GirlsLengthZScoreDataset from "@/utils/dataset/girlsLengthZScoreDataset.utils";
+import BoysWeightZScoreDataset from "@/utils/dataset/boysWeightZScoreDataset.utils";
+import GirlsWeightZScoreDataset from "@/utils/dataset/girlsWeightZScoreDataset.utils";
 import BoysBMIZscoreDataset from "@/utils/dataset/boysBMIZscoreDataset.utils";
 import GirlsBMIZscoreDataset from "@/utils/dataset/girlsBMIZscoreDataset.utils";
 
@@ -40,6 +44,8 @@ class NutritionService {
           "weight",
           "gender",
           "bmi",
+          "height_category",
+          "mass_category",
           "weight_category",
           "creator_id",
           "created_at",
@@ -71,6 +77,8 @@ class NutritionService {
           "weight",
           "gender",
           "bmi",
+          "height_category",
+          "mass_category",
           "weight_category",
           "creator_id",
           "created_at",
@@ -101,6 +109,8 @@ class NutritionService {
         "weight",
         "gender",
         "bmi",
+        "height_category",
+        "mass_category",
         "weight_category",
         "creator_id",
         "created_at",
@@ -167,6 +177,8 @@ class NutritionService {
         "height",
         "weight",
         "bmi",
+        "height_category",
+        "mass_category",
         "weight_category",
         "gender",
         "creator_id",
@@ -197,6 +209,8 @@ class NutritionService {
     creatorId: string,
   ): Promise<NutritionHistoryInterface> => {
     let bmi = 0;
+    let heightCategory = "No Data";
+    let weightCategory = "No Data";
     let bmiCategory = "No Data";
 
     const childId = `${creatorId}-${nutritionHistoryData.child_name.replace(/\s/g, "")}-${
@@ -207,6 +221,17 @@ class NutritionService {
 
     if (ageInMonth >= 0 && ageInMonth <= 60) {
       bmi = nutritionHistoryData.weight / Math.pow(nutritionHistoryData.height / 100, 2);
+
+      heightCategory = this.lengthCategoryDecider(
+        nutritionHistoryData.height,
+        nutritionHistoryData.gender,
+        ageInMonth,
+      );
+      weightCategory = this.weightCategoryDecider(
+        nutritionHistoryData.weight,
+        nutritionHistoryData.gender,
+        ageInMonth,
+      );
       bmiCategory = this.bmiCategoryDecider(bmi, nutritionHistoryData.gender, ageInMonth);
     }
 
@@ -215,6 +240,8 @@ class NutritionService {
       child_id: childId,
       creator_id: creatorId,
       bmi: bmi.toFixed(2),
+      height_category: heightCategory,
+      mass_category: weightCategory,
       weight_category: bmiCategory,
     });
     return nutritionHistory;
@@ -225,6 +252,8 @@ class NutritionService {
     nutritionHistoryData: UpdateNutritionHistoryDto,
   ): Promise<void> => {
     let bmi = 0;
+    let heightCategory = "No Data";
+    let weightCategory = "No Data";
     let bmiCategory = "No Data";
 
     const existingNutritionHistory = await this.nutritionHistories.findByPk(nutritionHistoryId);
@@ -237,6 +266,17 @@ class NutritionService {
 
     if (nutritionHistoryData.age_in_month >= 0 && nutritionHistoryData.age_in_month <= 60) {
       bmi = nutritionHistoryData.weight / Math.pow(nutritionHistoryData.height / 100, 2);
+
+      heightCategory = this.lengthCategoryDecider(
+        nutritionHistoryData.height,
+        existingNutritionHistory.gender,
+        Number(nutritionHistoryData.age_in_month),
+      );
+      weightCategory = this.weightCategoryDecider(
+        nutritionHistoryData.weight,
+        existingNutritionHistory.gender,
+        Number(nutritionHistoryData.age_in_month),
+      );
       bmiCategory = this.bmiCategoryDecider(
         bmi,
         existingNutritionHistory.gender,
@@ -248,6 +288,8 @@ class NutritionService {
       {
         ...nutritionHistoryData,
         bmi: bmi.toFixed(2),
+        height_category: heightCategory,
+        mass_category: weightCategory,
         weight_category: bmiCategory,
         age_text: ageText,
       },
@@ -262,6 +304,64 @@ class NutritionService {
     if (!existingNutritionHistory) throw new HttpExceptionBadRequest("Nutrition History not found");
 
     await this.nutritionHistories.destroy({ where: { id: nutritionHistoryId } });
+  };
+
+  private weightCategoryDecider = (weight: number, gender: string, ageInMonth: number): string => {
+    const dataset = gender === "Laki-laki" ? BoysWeightZScoreDataset : GirlsWeightZScoreDataset;
+    const weightStandards = dataset.find((data) => data.Month === ageInMonth);
+
+    if (weightStandards) {
+      const { SD3neg, SD2neg, SD1neg, SD0, SD1, SD2, SD3 } = weightStandards;
+
+      if (weight <= SD3neg) {
+        return "Severely Wasted";
+      } else if (weight > SD3neg && weight <= SD2neg) {
+        return "Wasted";
+      } else if (weight > SD2neg && weight <= SD1neg) {
+        return "Normal";
+      } else if (weight > SD1neg && weight <= SD0) {
+        return "Normal";
+      } else if (weight > SD0 && weight <= SD1) {
+        return "Normal";
+      } else if (weight > SD1 && weight <= SD2) {
+        return "Overweight";
+      } else if (weight > SD2 && weight <= SD3) {
+        return "Overweight";
+      } else {
+        return "Obese";
+      }
+    }
+
+    return "No Data";
+  };
+
+  private lengthCategoryDecider = (length: number, gender: string, ageInMonth: number): string => {
+    const dataset = gender === "Laki-laki" ? BoysLengthZScoreDataset : GirlsLengthZScoreDataset;
+    const lengthStandards = dataset.find((data) => data.Month === ageInMonth);
+
+    if (lengthStandards) {
+      const { SD3neg, SD2neg, SD1neg, SD0, SD1, SD2, SD3 } = lengthStandards;
+
+      if (length <= SD3neg) {
+        return "Severely Stunted";
+      } else if (length > SD3neg && length <= SD2neg) {
+        return "Stunted";
+      } else if (length > SD2neg && length <= SD1neg) {
+        return "Normal";
+      } else if (length > SD1neg && length <= SD0) {
+        return "Normal";
+      } else if (length > SD0 && length <= SD1) {
+        return "Normal";
+      } else if (length > SD1 && length <= SD2) {
+        return "Normal";
+      } else if (length > SD2 && length <= SD3) {
+        return "Normal";
+      } else {
+        return "Tall";
+      }
+    }
+
+    return "No Data";
   };
 
   private bmiCategoryDecider = (bmi: number, gender: string, ageInMonth: number): string => {
@@ -322,6 +422,8 @@ class NutritionService {
         height: nutritionHistory.height,
         weight: nutritionHistory.weight,
         bmi: nutritionHistory.bmi,
+        height_category: nutritionHistory.height_category,
+        mass_category: nutritionHistory.mass_category,
         weight_category: nutritionHistory.weight_category,
         created_at: nutritionHistory.created_at,
       };
@@ -353,6 +455,8 @@ class NutritionService {
       latest_height: latestNutritionHistory.height,
       latest_weight: latestNutritionHistory.weight,
       latest_bmi: latestNutritionHistory.bmi,
+      latest_height_category: latestNutritionHistory.height_category,
+      latest_mass_category: latestNutritionHistory.mass_category,
       latest_weight_category: latestNutritionHistory.weight_category,
       nutrition_histories: mappedNutritionHistories,
       creator_id: nutritionHistories[0].creator_id,
@@ -390,6 +494,8 @@ class NutritionService {
         latest_height: latestNutritionHistory.height,
         latest_weight: latestNutritionHistory.weight,
         latest_bmi: latestNutritionHistory.bmi,
+        latest_height_category: latestNutritionHistory.height_category,
+        latest_mass_category: latestNutritionHistory.mass_category,
         latest_weight_category: latestNutritionHistory.weight_category,
         creator_username: latestNutritionHistory.creator.username,
         creator_profile: latestNutritionHistory.creator.profile,

@@ -33,8 +33,18 @@ module.exports = {
         type: Sequelize.FLOAT,
         allowNull: false,
       },
+      height_category: {
+        type: Sequelize.STRING(256),
+        defaultValue: 'No Data',
+        allowNull: false,
+      },
       weight_category: {
         type: Sequelize.STRING(256),
+        allowNull: false,
+      },
+      mass_category: {
+        type: Sequelize.STRING(256),
+        defaultValue: 'No Data',
         allowNull: false,
       },
       gender: {
