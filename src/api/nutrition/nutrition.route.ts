@@ -36,7 +36,7 @@ class NutritionRoute implements RouteInterface {
       authenticate,
       authorize([ADMIN, DOCTOR]),
       validationMiddleware(GetChildrenQueryDto, "query"),
-      this.nutritionController.getNutritionHistories,
+      this.nutritionController.getChildrens,
     );
     this.router.get(
       `${this.path}/me`,
