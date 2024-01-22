@@ -19,6 +19,11 @@ export interface NutritionHistoryInterface {
   created_at: Date;
 }
 
+export interface PaginatedNutritionHistoriesInterface {
+  meta: MetaInterface;
+  rows: NutritionHistoryInterface[];
+}
+
 export interface MappedChildrenInterface {
   latest_age: string;
   latest_height: number;
