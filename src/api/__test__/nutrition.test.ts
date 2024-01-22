@@ -225,6 +225,31 @@ describe("nutrition endpoint", () => {
     });
   });
 
+  describe("when GET /api/bmi", () => {
+    it("should response 200 and returned all nutrition histories", async () => {
+      const res = await request(app.getServer())
+        .get("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data).toHaveLength(2);
+    });
+
+    it("should response 401 if token is not provided", async () => {
+      const res = await request(app.getServer()).get("/api/bmi").expect(401);
+      expect(res.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 401 if token is invalid", async () => {
+      const res = await request(app.getServer())
+        .get("/api/bmi")
+        .set("Authorization", "Bearer invalid_token")
+        .expect(401);
+      expect(res.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+  });
+
   describe("when GET /api/bmi/me", () => {
     let secondAccessToken;
 

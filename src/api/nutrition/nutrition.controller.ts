@@ -67,6 +67,21 @@ class NutritionController {
     },
   );
 
+  public getNutritionHistories = expressAsyncHandler(
+    async (req: AuthenticateRequest, res: Response): Promise<void> => {
+      const { limit, page, filter } = req.query;
+      const offset: number = (Number(page) - 1) * Number(limit);
+      const { rows, meta } = await this.nutritionService.getNutritionHistories(
+        offset,
+        Number(limit),
+        filter as string,
+      );
+      res
+        .status(status.OK)
+        .json(apiResponse(status.OK, "OK", "Nutrition histories successfully found", rows, meta));
+    },
+  );
+
   public getNutritionHistory = expressAsyncHandler(
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
       const { nutritionHistoryId } = req.params;

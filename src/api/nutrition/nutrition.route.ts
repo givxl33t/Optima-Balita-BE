@@ -25,33 +25,18 @@ class NutritionRoute implements RouteInterface {
 
   private initializeRoutes(): void {
     this.router.get(
+      `${this.path}`,
+      authenticate,
+      authorize([ADMIN, DOCTOR]),
+      validationMiddleware(GetChildrenQueryDto, "query"),
+      this.nutritionController.getNutritionHistories,
+    );
+    this.router.get(
       `${this.path}/children`,
       authenticate,
       authorize([ADMIN, DOCTOR]),
       validationMiddleware(GetChildrenQueryDto, "query"),
-      this.nutritionController.getChildrens,
-    );
-    this.router.get(
-      `${this.path}/children/:childId`,
-      authenticate,
-      authorize([ADMIN, DOCTOR]),
-      validationMiddleware(ChildrenIdParamDto, "params"),
-      this.nutritionController.getChildren,
-    );
-    this.router.put(
-      `${this.path}/children/:childId`,
-      authenticate,
-      authorize([ADMIN, DOCTOR]),
-      validationMiddleware(ChildrenIdParamDto, "params"),
-      validationMiddleware(UpdateChildrenDto, "body"),
-      this.nutritionController.updateChildren,
-    );
-    this.router.delete(
-      `${this.path}/children/:childId`,
-      authenticate,
-      authorize([ADMIN, DOCTOR]),
-      validationMiddleware(ChildrenIdParamDto, "params"),
-      this.nutritionController.deleteChildren,
+      this.nutritionController.getNutritionHistories,
     );
     this.router.get(
       `${this.path}/me`,
@@ -85,6 +70,28 @@ class NutritionRoute implements RouteInterface {
       authorize([ADMIN, DOCTOR]),
       validationMiddleware(NutritionHistoryIdParamDto, "params"),
       this.nutritionController.deleteNutritionHistory,
+    );
+    this.router.get(
+      `${this.path}/children/:childId`,
+      authenticate,
+      authorize([ADMIN, DOCTOR]),
+      validationMiddleware(ChildrenIdParamDto, "params"),
+      this.nutritionController.getChildren,
+    );
+    this.router.put(
+      `${this.path}/children/:childId`,
+      authenticate,
+      authorize([ADMIN, DOCTOR]),
+      validationMiddleware(ChildrenIdParamDto, "params"),
+      validationMiddleware(UpdateChildrenDto, "body"),
+      this.nutritionController.updateChildren,
+    );
+    this.router.delete(
+      `${this.path}/children/:childId`,
+      authenticate,
+      authorize([ADMIN, DOCTOR]),
+      validationMiddleware(ChildrenIdParamDto, "params"),
+      this.nutritionController.deleteChildren,
     );
   }
 }

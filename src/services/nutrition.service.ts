@@ -9,6 +9,7 @@ import {
   MappedChildrenInterface,
   MappedChildInterface,
   PaginatedChildrenInterface,
+  PaginatedNutritionHistoriesInterface,
 } from "@/interfaces/nutrition.interface";
 import sequelize from "sequelize";
 import { metaBuilder } from "@/utils/pagination.utils";
@@ -59,13 +60,17 @@ class NutritionService {
         ],
         where: whereClause,
         order: [["created_at", "DESC"]],
-        offset,
-        limit,
       });
 
       const mappedRows = this.mappedChildrens(nutritionHistories);
+
+      // Manual pagination
+      const startIndex = offset;
+      const endIndex = offset + limit;
+      const paginatedRows = mappedRows.slice(startIndex, endIndex);
+
       meta = metaBuilder(offset, limit, mappedRows.length);
-      return { rows: mappedRows, meta };
+      return { rows: paginatedRows, meta };
     } else {
       nutritionHistories = await this.nutritionHistories.findAll({
         attributes: [
@@ -188,6 +193,87 @@ class NutritionService {
     });
 
     return nutritionHistories;
+  };
+
+  public getNutritionHistories = async (
+    offset: number,
+    limit: number,
+    filter?: string,
+  ): Promise<PaginatedNutritionHistoriesInterface> => {
+    let meta;
+    let nutritionHistories;
+
+    const whereClause = {};
+
+    if (filter) {
+      whereClause[sequelize.Op.or] = [
+        {
+          height_category: {
+            [sequelize.Op.iLike]: `%${filter}%`,
+          },
+        },
+        {
+          weight_category: {
+            [sequelize.Op.iLike]: `%${filter}%`,
+          },
+        },
+        {
+          mass_category: {
+            [sequelize.Op.iLike]: `%${filter}%`,
+          },
+        },
+      ];
+    }
+
+    if (!isNaN(offset) && !isNaN(limit)) {
+      nutritionHistories = await this.nutritionHistories.findAndCountAll({
+        attributes: [
+          "id",
+          "child_id",
+          "child_name",
+          "age_text",
+          "height",
+          "weight",
+          "gender",
+          "bmi",
+          "height_category",
+          "mass_category",
+          "weight_category",
+          "creator_id",
+          "created_at",
+        ],
+        where: whereClause,
+        offset,
+        limit,
+        order: [["created_at", "DESC"]],
+      });
+
+      const { rows, count } = nutritionHistories;
+      meta = metaBuilder(offset, limit, count);
+      return { rows, meta };
+    } else {
+      nutritionHistories = await this.nutritionHistories.findAll({
+        attributes: [
+          "id",
+          "child_id",
+          "child_name",
+          "age_text",
+          "height",
+          "weight",
+          "gender",
+          "bmi",
+          "height_category",
+          "mass_category",
+          "weight_category",
+          "creator_id",
+          "created_at",
+        ],
+        where: whereClause,
+        order: [["created_at", "DESC"]],
+      });
+
+      return { rows: nutritionHistories, meta };
+    }
   };
 
   public getNutritionHistory = async (
