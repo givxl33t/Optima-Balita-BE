@@ -290,8 +290,6 @@ class ArticleService {
 
   public mappedArticles = (articles: ArticleInterface[]): MappedArticleInterface[] => {
     return articles.map((article) => {
-      const { author } = article;
-      const { username, profile } = author;
       delete article.author_id;
       return {
         id: article.id,
@@ -300,8 +298,10 @@ class ArticleService {
         description: article.description,
         content: article.content,
         image: article.image,
-        author: username,
-        author_profile: profile,
+        author: article.author?.username ?? "[Deleted User]",
+        author_profile:
+          article.author?.profile ??
+          "https://thinksport.com.au/wp-content/uploads/2020/01/avatar-.jpg",
         created_at: article.created_at,
       };
     });

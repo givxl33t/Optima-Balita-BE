@@ -1,5 +1,7 @@
 import { Sequelize, DataTypes, Model, CreationOptional } from "sequelize";
 import { UserModel } from "../auth/user.model";
+import { UserDiscussionLikeModel } from "./userDiscussionLike.model";
+import { CommentModel } from "./comment.model";
 
 export class DiscussionModel extends Model {
   public id!: CreationOptional<string>;
@@ -58,8 +60,13 @@ export default function (sequelize: Sequelize): typeof DiscussionModel {
       sequelize,
       timestamps: true,
       freezeTableName: true,
+      hooks: {
+        beforeDestroy: async (discussion): Promise<void> => {
+          await CommentModel.destroy({ where: { discussion_id: discussion.id } });
+          await UserDiscussionLikeModel.destroy({ where: { discussion_id: discussion.id } });
+        },
+      },
     },
   );
-
   return DiscussionModel;
 }

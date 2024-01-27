@@ -1,5 +1,9 @@
 import { Sequelize, DataTypes, Model, CreationOptional } from "sequelize";
 import { RoleModel } from "./role.model";
+import { UserRoleModel } from "./user_role.model";
+import { UserDiscussionLikeModel } from "../forum/userDiscussionLike.model";
+import { NutritionHistoryModel } from "../nutrition/nutritionHistory.model";
+import { ConsultantModel } from "../consultation/consultant.model";
 
 export class UserModel extends Model {
   public id!: CreationOptional<string>;
@@ -59,7 +63,16 @@ export default function (sequelize: Sequelize): typeof UserModel {
       sequelize,
       timestamps: true,
       freezeTableName: true,
+      hooks: {
+        beforeDestroy: async (user: UserModel): Promise<void> => {
+          await UserRoleModel.destroy({ where: { user_id: user.id } });
+          await NutritionHistoryModel.destroy({ where: { creator_id: user.id } });
+          await ConsultantModel.destroy({ where: { consultant_id: user.id } });
+          await UserDiscussionLikeModel.destroy({ where: { user_id: user.id } });
+        },
+      },
     },
   );
+
   return UserModel;
 }
