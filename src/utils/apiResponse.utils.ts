@@ -1,10 +1,7 @@
-import { PaginationInterface } from "@/interfaces/pagination.interface";
+import { MetaInterface } from "@/interfaces/pagination.interface";
 import { ApiResponseInterface } from "@interfaces/apiResponse.interface";
 
-/**
- * Returns a custom response.
- */
-export function apiResponse<T extends PaginationInterface>(
+export function apiResponse<T extends MetaInterface>(
   code: number,
   responseStatus: string,
   message: string,

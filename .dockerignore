@@ -1,3 +1,7 @@
+# git files
+.git
+.gitignore
+
 # compiled output
 **/node_modules/*
 **/dist/*

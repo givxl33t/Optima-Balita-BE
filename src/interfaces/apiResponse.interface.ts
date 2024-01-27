@@ -1,10 +1,10 @@
-import { PaginationInterface } from "./pagination.interface";
+import { MetaInterface } from "./pagination.interface";
 
 export interface ApiResponseInterface {
   code: number;
   status: string;
   message: string;
-  meta?: PaginationInterface;
+  meta?: MetaInterface;
   data?: unknown;
   errors?: string | object;
 }

@@ -5,6 +5,12 @@ import UserModel from "@api/auth/user.model";
 import RoleModel from "@api/auth/role.model";
 import UserRoleModel from "@api/auth/user_role.model";
 import AuthModel from "@/api/auth/auth.model";
+import ArticleModel from "@/api/article/article.model";
+import DiscussionModel from "@/api/forum/discussion.model";
+import UserDiscussionLikeModel from "@/api/forum/userDiscussionLike.model";
+import CommentModel from "@/api/forum/comment.model";
+import NutritionHistoryModel from "@/api/nutrition/nutritionHistory.model";
+import ConsultantModel from "@/api/consultation/consultant.model";
 
 const dbConfig = config[NODE_ENV || "development"];
 const sequelize = new Sequelize(
@@ -28,6 +34,12 @@ const models = {
   AuthModel: AuthModel(sequelize),
   RoleModel: RoleModel(sequelize),
   UserRoleModel: UserRoleModel(sequelize),
+  ArticleModel: ArticleModel(sequelize),
+  DiscussionModel: DiscussionModel(sequelize),
+  UserDiscussionLikeModel: UserDiscussionLikeModel(sequelize),
+  CommentModel: CommentModel(sequelize),
+  NutritionHistoryModel: NutritionHistoryModel(sequelize),
+  ConsultantModel: ConsultantModel(sequelize),
 };
 
 const DB = {

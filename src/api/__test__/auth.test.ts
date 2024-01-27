@@ -261,4 +261,126 @@ describe("authentications endpoint", () => {
       expect(response.body.message).toEqual("refreshToken must be a string");
     });
   });
+
+  describe("when GET /api/auth/me", () => {
+    let userData;
+    let loginResponse;
+
+    beforeAll(async () => {
+      userData = {
+        username: "test",
+        email: "test@gmail.com",
+        password: "F4k3P4ssw0rd!",
+      };
+
+      await request(app.getServer()).post("/api/auth/register").send(userData).expect(201);
+    });
+
+    it("should response 200 and user data", async () => {
+      loginResponse = await request(app.getServer())
+        .post("/api/auth/login")
+        .send({ email: userData.email, password: userData.password })
+        .expect(201);
+
+      const response = await request(app.getServer())
+        .get("/api/auth/me")
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}`)
+        .expect(200);
+
+      expect(response.body.data).toHaveProperty("username");
+      expect(response.body.data).toHaveProperty("email");
+      expect(response.body.data).toHaveProperty("profile");
+    });
+
+    it("should response 401 when access token is invalid", async () => {
+      const response = await request(app.getServer())
+        .get("/api/auth/me")
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}1`)
+        .expect(401);
+      expect(response.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+
+    it("should response 401 when no access token provided", async () => {
+      const response = await request(app.getServer()).get("/api/auth/me").expect(401);
+      expect(response.body.message).toEqual("Authorization Header missing.");
+    });
+  });
+
+  describe("When PUT /api/auth/profile", () => {
+    let userData;
+    let loginResponse;
+
+    beforeAll(async () => {
+      userData = {
+        username: "test",
+        email: "test4@gmail.com",
+        password: "F4k3P4ssw0rd!",
+      };
+
+      await request(app.getServer()).post("/api/auth/register").send(userData).expect(201);
+    });
+
+    it("should response 200 and updated user data", async () => {
+      loginResponse = await request(app.getServer())
+        .post("/api/auth/login")
+        .send({ email: userData.email, password: userData.password })
+        .expect(201);
+
+      const response = await request(app.getServer())
+        .put("/api/auth/profile")
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}`)
+        .send({ username: "test1" })
+        .expect(200);
+
+      expect(response.body.message).toEqual("User successfully updated");
+
+      const user = await users.findOne({ where: { email: userData.email } });
+
+      expect(user.username).toEqual("test1");
+    });
+
+    it("should response 401 when access token is invalid", async () => {
+      const response = await request(app.getServer())
+        .put("/api/auth/profile")
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}1`)
+        .send({ username: "test1" })
+        .expect(401);
+      expect(response.body.message).toEqual("Invalid or Expired token. Please login again.");
+    });
+
+    it("should response 401 when no access token provided", async () => {
+      const response = await request(app.getServer())
+        .put("/api/auth/profile")
+        .send({ username: "test1" })
+        .expect(401);
+      expect(response.body.message).toEqual("Authorization Header missing.");
+    });
+
+    it("should response 422 when username is empty", async () => {
+      const response = await request(app.getServer())
+        .put("/api/auth/profile")
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}`)
+        .send({ username: "" })
+        .expect(422);
+      expect(response.body.message).toEqual("Username Required");
+    });
+
+    it("should response 422 when email is empty", async () => {
+      const response = await request(app.getServer())
+        .put("/api/auth/profile")
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}`)
+        .send({ email: "" })
+        .expect(422);
+      expect(response.body.message).toEqual("Email Required");
+    });
+
+    it("should response 422 when email is invalid", async () => {
+      const response = await request(app.getServer())
+        .put("/api/auth/profile")
+        .set("Authorization", `Bearer ${loginResponse.body.accessToken}`)
+        .send({ email: "test" })
+        .expect(422);
+      expect(response.body.message).toEqual("email must be an email");
+    });
+  });
 });
