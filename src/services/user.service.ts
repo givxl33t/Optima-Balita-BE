@@ -191,10 +191,7 @@ class UserService {
 
     await this.users.destroy({
       where: { id: userId },
-    });
-
-    await this.userRoles.destroy({
-      where: { user_id: userId },
+      individualHooks: true,
     });
   };
 

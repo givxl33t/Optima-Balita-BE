@@ -232,7 +232,10 @@ class ForumService {
     if (roleName !== "ADMIN" && existingDiscussion.poster_id !== posterId)
       throw new HttpExceptionForbidden("You are not the poster.");
 
-    await this.discussions.destroy({ where: { id: discussionId } });
+    await this.discussions.destroy({
+      where: { id: discussionId },
+      individualHooks: true,
+    });
   };
 
   public getComments = async (
@@ -426,26 +429,31 @@ class ForumService {
     commentOption?: string,
   ): MappedDiscussionInterface[] => {
     const mappedDiscussions = discussions.map((discussion) => {
-      const is_liked = discussion.likes.some((like) => like.id === userId);
-      const comment_count = discussion.comments ? discussion.comments.length : 0;
-      const like_count = discussion.likes.length;
-      const poster_username = discussion.poster.username;
-      const poster_profile = discussion.poster.profile;
-      const poster_role = discussion.poster.roles[0].name;
+      const is_liked = userId ? discussion.likes.some((like) => like.id === userId) : false;
+      const comment_count = discussion.comments?.length ?? 0;
+      const like_count = discussion.likes?.length ?? 0;
+      const poster_id = discussion.poster_id ?? "[Deleted User]";
+      const poster_username = discussion.poster?.username ?? "[Deleted User]";
+      const poster_profile =
+        discussion.poster?.profile ??
+        "https://thinksport.com.au/wp-content/uploads/2020/01/avatar-.jpg";
+      const poster_role = discussion.poster?.roles[0].name ?? "GUEST";
       if (commentOption === "WITHCOMMENT" && discussion.comments) {
-        // order comments by created_at descending
         discussion.comments.sort((a, b) => {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
 
         const mappedComments: MappedCommentInterface[] = discussion.comments.map((comment) => {
-          const commenter_username = comment.commenter.username;
-          const commenter_profile = comment.commenter.profile;
-          const commenter_role = comment.commenter.roles[0].name;
+          const commenter_id = comment.commenter?.id ?? "[Deleted User]";
+          const commenter_username = comment.commenter?.username ?? "[Deleted User]";
+          const commenter_profile =
+            comment.commenter?.profile ??
+            "https://thinksport.com.au/wp-content/uploads/2020/01/avatar-.jpg";
+          const commenter_role = comment.commenter?.roles[0].name ?? "GUEST";
           return {
             id: comment.id,
             comment_content: comment.comment_content,
-            commenter_id: comment.commenter_id,
+            commenter_id,
             commenter_username,
             commenter_profile,
             commenter_role,
@@ -458,7 +466,7 @@ class ForumService {
           id: discussion.id,
           title: discussion.title,
           post_content: discussion.post_content,
-          poster_id: discussion.poster_id,
+          poster_id,
           poster_username,
           poster_profile,
           poster_role,
@@ -474,7 +482,7 @@ class ForumService {
         id: discussion.id,
         title: discussion.title,
         post_content: discussion.post_content,
-        poster_id: discussion.poster_id,
+        poster_id,
         poster_username,
         poster_profile,
         poster_role,
@@ -490,20 +498,25 @@ class ForumService {
 
   public mappedComments = (comments: CommentInterface[]): MappedCommentInterface[] => {
     const mappedComments = comments.map((comment) => {
-      const commenter_username = comment.commenter.username;
-      const commenter_profile = comment.commenter.profile;
-      const commenter_role = comment.commenter.roles[0].name;
+      const commenter_id = comment.commenter?.id ?? "[Deleted User]";
+      const commenter_username = comment.commenter?.username ?? "[Deleted User]";
+      const commenter_profile =
+        comment.commenter?.profile ??
+        "https://thinksport.com.au/wp-content/uploads/2020/01/avatar-.jpg";
+      const commenter_role = comment.commenter?.roles[0].name ?? "GUEST";
       if (comment.discussion) {
         const discussion_title = comment.discussion.title;
         const discussion_post_content = comment.discussion.post_content;
-        const discussion_poster_id = comment.discussion.poster_id;
-        const discussion_poster_username = comment.discussion.poster.username;
-        const discussion_poster_profile = comment.discussion.poster.profile;
-        const discussion_poster_role = comment.discussion.poster.roles[0].name;
+        const discussion_poster_id = comment.discussion.poster_id ?? "[Deleted User]";
+        const discussion_poster_username = comment.discussion.poster?.username ?? "[Deleted User]";
+        const discussion_poster_profile =
+          comment.discussion.poster?.profile ??
+          "https://thinksport.com.au/wp-content/uploads/2020/01/avatar-.jpg";
+        const discussion_poster_role = comment.discussion.poster?.roles[0].name ?? "GUEST";
         return {
           id: comment.id,
           comment_content: comment.comment_content,
-          commenter_id: comment.commenter_id,
+          commenter_id,
           commenter_username,
           commenter_profile,
           commenter_role,

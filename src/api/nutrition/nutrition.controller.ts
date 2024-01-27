@@ -119,7 +119,6 @@ class NutritionController {
     async (req: AuthenticateRequest, res: Response): Promise<void> => {
       const { nutritionHistoryId } = req.params;
       const nutritionHistoryData = req.body;
-      console.log("controller nutritionHistoryData", nutritionHistoryData);
       await this.nutritionService.updateNutritionHistory(nutritionHistoryId, nutritionHistoryData);
       res
         .status(status.OK)
