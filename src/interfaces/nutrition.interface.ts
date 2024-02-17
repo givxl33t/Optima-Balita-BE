@@ -5,6 +5,9 @@ export interface NutritionHistoryInterface {
   id: string;
   child_id: string;
   child_name?: string;
+  child_nik?: string;
+  child_village?: string;
+  date_of_birth?: Date;
   gender?: string;
   age_text: string;
   height: number;
@@ -25,6 +28,11 @@ export interface PaginatedNutritionHistoriesInterface {
 }
 
 export interface MappedChildrenInterface {
+  id: string;
+  child_name: string;
+  child_nik: string;
+  child_village: string;
+  date_of_birth: Date;
   latest_age: string;
   latest_height: number;
   latest_weight: number;
@@ -40,6 +48,9 @@ export interface MappedChildrenInterface {
 export interface MappedChildInterface {
   id: string;
   child_name: string;
+  child_nik: string;
+  child_village: string;
+  date_of_birth: Date;
   gender: string;
   latest_age: string;
   latest_height: number;

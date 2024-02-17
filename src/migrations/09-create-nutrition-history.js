@@ -17,6 +17,21 @@ module.exports = {
         type: Sequelize.STRING(256),
         allowNull: false,
       },
+      child_nik: {
+        type: Sequelize.STRING(256),
+        allowNull: false,
+        defaultValue: '3202080504910003',
+      },
+      child_village: {
+        type: Sequelize.STRING(256),
+        allowNull: false,
+        defaultValue: 'Dukuhseti',
+      },
+      date_of_birth: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
       age_text: {
         type: Sequelize.STRING(256),
         allowNull: false,

@@ -75,11 +75,12 @@ describe("nutrition endpoint", () => {
     it("should response 200 and returned all children", async () => {
       const nutritionHistoryData = {
         child_name: "Test Child",
+        child_nik: "3111111111111111",
+        child_village: "Dukuhseti",
+        date_of_birth: new Date().toISOString(),
         age_text: "1 tahun 11 bulan",
         height: "100",
         weight: "20",
-        bmi: "15.32",
-        weight_category: "Underweight",
         gender: "Laki-laki",
       };
 
@@ -120,11 +121,12 @@ describe("nutrition endpoint", () => {
 
     const nutritionHistoryData = {
       child_name: "Test Child",
+      child_nik: "3111111111111111",
+      child_village: "Dukuhseti",
+      date_of_birth: new Date().toISOString(),
       age_text: "1 tahun 11 bulan",
       height: "100",
       weight: "20",
-      bmi: "15.32",
-      weight_category: "Underweight",
       gender: "Laki-laki",
     };
 
@@ -177,11 +179,12 @@ describe("nutrition endpoint", () => {
 
     const nutritionHistoryData = {
       child_name: "Test Child",
+      child_nik: "3111111111111111",
+      child_village: "Dukuhseti",
+      date_of_birth: new Date().toISOString(),
       age_text: "1 tahun 11 bulan",
       height: "100",
       weight: "20",
-      bmi: "15.32",
-      weight_category: "Underweight",
       gender: "Laki-laki",
     };
 
@@ -255,11 +258,12 @@ describe("nutrition endpoint", () => {
 
     const nutritionHistoryData = {
       child_name: "Test Child",
+      child_nik: "3111111111111111",
+      child_village: "Dukuhseti",
+      date_of_birth: new Date().toISOString(),
       age_text: "1 tahun 11 bulan",
       height: "100",
       weight: "20",
-      bmi: "15.32",
-      weight_category: "Underweight",
       gender: "Laki-laki",
     };
 
@@ -318,11 +322,12 @@ describe("nutrition endpoint", () => {
   describe("when GET /api/bmi/:nutritionHistoryId", () => {
     const nutritionHistoryData = {
       child_name: "Test Child",
+      child_nik: "3111111111111111",
+      child_village: "Dukuhseti",
+      date_of_birth: new Date().toISOString(),
       age_text: "1 tahun 11 bulan",
       height: "100",
       weight: "20",
-      bmi: "15.32",
-      weight_category: "Underweight",
       gender: "Laki-laki",
     };
 
@@ -378,11 +383,12 @@ describe("nutrition endpoint", () => {
   describe("when POST /api/bmi", () => {
     const nutritionHistoryData = {
       child_name: "Test Child",
+      child_nik: "3111111111111111",
+      child_village: "Dukuhseti",
+      date_of_birth: new Date().toISOString(),
       age_text: "1 tahun 11 bulan",
       height: "100",
       weight: "20",
-      bmi: "15.32",
-      weight_category: "Underweight",
       gender: "Laki-laki",
     };
 
@@ -422,6 +428,40 @@ describe("nutrition endpoint", () => {
         .send({ ...nutritionHistoryData, child_name: "" })
         .expect(422);
       expect(res.body.message).toEqual("Child Name Required");
+    });
+
+    it("should response 422 if child_nik is not provided", async () => {
+      await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ ...nutritionHistoryData, child_nik: null })
+        .expect(422);
+    });
+
+    it("should response 422 if child_nik is not a number", async () => {
+      const res = await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ ...nutritionHistoryData, child_nik: "asdadsasdasddddd" })
+        .expect(422);
+      expect(res.body.message).toEqual("Child NIK must be a number");
+    });
+
+    it("should response 422 if child_nik is not equal to 16 character", async () => {
+      const res = await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ ...nutritionHistoryData, child_nik: "424242" })
+        .expect(422);
+      expect(res.body.message).toEqual("NIK must be 16 characters");
+    });
+
+    it("should response 422 if child_village is not a valid option", async () => {
+      await request(app.getServer())
+        .post("/api/bmi")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ ...nutritionHistoryData, child_village: "Cikini" })
+        .expect(422);
     });
 
     it("should response 422 if age_text is not provided", async () => {
@@ -468,11 +508,12 @@ describe("nutrition endpoint", () => {
 
     const nutritionHistoryData = {
       child_name: "Test Child",
+      child_nik: "3111111111111111",
+      child_village: "Dukuhseti",
+      date_of_birth: new Date().toISOString(),
       age_text: "1 tahun 11 bulan",
       height: "100",
       weight: "20",
-      bmi: "15.32",
-      weight_category: "Underweight",
       gender: "Laki-laki",
     };
 
@@ -536,11 +577,12 @@ describe("nutrition endpoint", () => {
 
     const nutritionHistoryData = {
       child_name: "Test Child",
+      child_nik: "3111111111111111",
+      child_village: "Dukuhseti",
+      date_of_birth: new Date().toISOString(),
       age_text: "1 tahun 11 bulan",
       height: "100",
       weight: "20",
-      bmi: "15.32",
-      weight_category: "Underweight",
       gender: "Laki-laki",
     };
 
