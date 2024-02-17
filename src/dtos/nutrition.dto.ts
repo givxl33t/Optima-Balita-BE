@@ -103,6 +103,24 @@ export class UpdateChildrenDto {
   public child_name: string;
 
   @IsOptional()
+  @IsNumberString({ no_symbols: true }, { message: "Child NIK must be a number" })
+  @IsNotEmpty({ message: "Child NIK Required" })
+  @MinLength(16, { message: "NIK must be 16 characters" })
+  @MaxLength(16, { message: "NIK must be 16 characters" })
+  public child_nik: number;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: "Child Village Required" })
+  @IsIn([...Object.values(Village)])
+  public child_village: string;
+
+  @IsOptional()
+  @IsDateString()
+  @IsNotEmpty({ message: "Date of Birth Required" })
+  public date_of_birth: Date;
+
+  @IsOptional()
   @IsString()
   @IsNotEmpty({ message: "Gender Required" })
   @IsIn([...Object.values(Gender)])
