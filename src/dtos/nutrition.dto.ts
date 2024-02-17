@@ -2,20 +2,29 @@
 import {
   IsString,
   IsNumberString,
-  IsDecimal,
   IsNotEmpty,
+  IsDateString,
   IsIn,
+  MinLength,
   MaxLength,
   IsOptional,
   IsUUID,
 } from "class-validator";
 import { PaginationDto } from "./pagination.dto";
 
-export enum WeightCategory {
-  NORMAL = "Normal",
-  UNDERWEIGHT = "Underweight",
-  OVERWEIGHT = "Overweight",
-  OBESITY = "Obesity",
+export enum Village {
+  ALASDOWO = "Alasdowo",
+  BAKALAN = "Bakalan",
+  BANYUTOWO = "Banyutowo",
+  DUKUHSETI = "Dukuhseti",
+  DUMPIL = "Dumpil",
+  GROGOLAN = "Grogolan",
+  KEMBANG = "Kembang",
+  KENANTI = "Kenanti",
+  NGAGEL = "Ngagel",
+  PUNCEL = "Puncel",
+  TEGALOMBO = "Tegalombo",
+  WEDUSAN = "Wedusan",
 }
 
 export enum Gender {
@@ -35,29 +44,33 @@ export class CreateNutritionHistoryDto {
   @MaxLength(255)
   public child_name: string;
 
+  @IsNumberString({ no_symbols: true }, { message: "Child NIK must be a number" })
+  @IsNotEmpty({ message: "Child NIK Required" })
+  @MinLength(16, { message: "NIK must be 16 characters" })
+  @MaxLength(16, { message: "NIK must be 16 characters" })
+  public child_nik: number;
+
+  @IsString()
+  @IsNotEmpty({ message: "Child Village Required" })
+  @IsIn([...Object.values(Village)])
+  public child_village: string;
+
+  @IsDateString()
+  @IsNotEmpty({ message: "Date of Birth Required" })
+  public date_of_birth: Date;
+
   @IsString()
   @IsNotEmpty({ message: "Age Text Required" })
   @MaxLength(255)
   public age_text: string;
 
-  @IsNumberString()
+  @IsNumberString({ no_symbols: true }, { message: "Height must be a number" })
   @IsNotEmpty({ message: "Height Required" })
   public height: number;
 
-  @IsNumberString()
+  @IsNumberString({ no_symbols: true }, { message: "Weight must be a number" })
   @IsNotEmpty({ message: "Weight Required" })
   public weight: number;
-
-  @IsOptional()
-  @IsDecimal()
-  @IsNotEmpty({ message: "BMI Required" })
-  public bmi: string;
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty({ message: "Weight Category Required" })
-  @IsIn([...Object.values(WeightCategory)])
-  public weight_category: string;
 
   @IsString()
   @IsNotEmpty({ message: "Gender Required" })
