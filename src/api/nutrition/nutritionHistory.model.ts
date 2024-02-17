@@ -5,6 +5,9 @@ export class NutritionHistoryModel extends Model {
   public id!: CreationOptional<string>;
   public child_id!: string;
   public child_name!: string;
+  public child_NIK!: string;
+  public child_village!: string;
+  public date_of_birth!: Date;
   public age_text!: string;
   public height!: number;
   public weight!: number;
@@ -49,6 +52,21 @@ export default function (sequelize: Sequelize): typeof NutritionHistoryModel {
       child_name: {
         type: DataTypes.STRING(256),
         allowNull: false,
+      },
+      child_nik: {
+        type: DataTypes.STRING(256),
+        allowNull: false,
+        defaultValue: "3202080504910003",
+      },
+      child_village: {
+        type: DataTypes.STRING(256),
+        allowNull: false,
+        defaultValue: "Dukuhseti",
+      },
+      date_of_birth: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: new Date(),
       },
       age_text: {
         type: DataTypes.STRING(256),
