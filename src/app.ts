@@ -31,7 +31,7 @@ class App {
 
   public listen(): void {
     this.app.listen(this.port, () => {
-      console.log(`App listening on ${this.port}!!!!`);
+      console.log(`App listening on ${this.port}`);
     });
   }
 
