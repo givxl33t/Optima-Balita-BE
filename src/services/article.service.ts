@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import DB from "@/config/database";
 import {
   ArticleInterface,
@@ -66,15 +67,6 @@ class ArticleService {
     filter?: string,
     order?: string,
   ): Promise<PaginatedArticleInterface> => {
-    const whereClause = filter
-      ? {
-          [sequelize.Op.or]: [
-            { title: { [sequelize.Op.iLike]: `%${filter}%` } },
-            { description: { [sequelize.Op.iLike]: `%${filter}%` } },
-          ],
-        }
-      : {};
-
     const articles = await this.articles.findAndCountAll({
       include: [
         {
@@ -84,7 +76,14 @@ class ArticleService {
         },
       ],
       order: order === "RANDOM" ? [sequelize.fn("RANDOM")] : [["created_at", "DESC"]],
-      where: whereClause,
+      where: filter
+        ? {
+            [sequelize.Op.or]: [
+              { title: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { description: { [sequelize.Op.iLike]: `%${filter}%` } },
+            ],
+          }
+        : {},
       offset: !isNaN(offset) ? offset : undefined,
       limit: !isNaN(limit) ? limit : undefined,
     });

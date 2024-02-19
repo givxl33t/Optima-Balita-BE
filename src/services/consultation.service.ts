@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import DB from "@/config/database";
 import sequelize from "sequelize";
 import { metaBuilder } from "@/utils/pagination.utils";
@@ -42,23 +43,6 @@ class ConsultationService {
     limit: number,
     filter?: string,
   ): Promise<PaginatedConsultantInterface> => {
-    const whereClause = filter
-      ? {
-          [sequelize.Op.or]: [
-            {
-              "$consultant.username$": {
-                [sequelize.Op.iLike]: `%${filter}%`,
-              },
-            },
-            {
-              consultant_description: {
-                [sequelize.Op.iLike]: `%${filter}%`,
-              },
-            },
-          ],
-        }
-      : {};
-
     const consultants = await this.consultants.findAndCountAll({
       include: [
         {
@@ -67,7 +51,14 @@ class ConsultationService {
         },
       ],
       order: [["created_at", "DESC"]],
-      where: whereClause,
+      where: filter
+        ? {
+            [sequelize.Op.or]: [
+              { consultant_description: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { "$consultant.username$": { [sequelize.Op.iLike]: `%${filter}%` } },
+            ],
+          }
+        : {},
       offset: !isNaN(offset) ? offset : undefined,
       limit: !isNaN(limit) ? limit : undefined,
     });

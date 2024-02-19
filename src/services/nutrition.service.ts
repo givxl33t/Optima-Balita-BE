@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import DB from "@/config/database";
 import {
   CreateNutritionHistoryDto,
@@ -125,18 +126,16 @@ class NutritionService {
     limit: number,
     filter?: string,
   ): Promise<PaginatedNutritionHistoriesInterface> => {
-    const whereClause = filter
-      ? {
-          [sequelize.Op.or]: [
-            { height_category: { [sequelize.Op.iLike]: `%${filter}%` } },
-            { weight_category: { [sequelize.Op.iLike]: `%${filter}%` } },
-            { mass_category: { [sequelize.Op.iLike]: `%${filter}%` } },
-          ],
-        }
-      : {};
-
     const nutritionHistories = await this.nutritionHistories.findAndCountAll({
-      where: whereClause,
+      where: filter
+        ? {
+            [sequelize.Op.or]: [
+              { height_category: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { mass_category: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { weight_category: { [sequelize.Op.iLike]: `%${filter}%` } },
+            ],
+          }
+        : {},
       offset: !isNaN(offset) ? offset : undefined,
       limit: !isNaN(limit) ? limit : undefined,
       order: [["created_at", "DESC"]],
