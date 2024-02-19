@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import DB from "@/config/database";
 import {
   ArticleInterface,
@@ -8,7 +9,8 @@ import { CreateArticleDto, UpdateArticleDto } from "@/dtos/article.dto";
 import { HttpExceptionBadRequest, HttpExceptionForbidden } from "@/exceptions/HttpException";
 import { metaBuilder } from "@/utils/pagination.utils";
 import generateSlug from "@/utils/generateSlug.utils";
-import sequelize, { OrderItem } from "sequelize";
+import uploadImageToCloudinary from "@/utils/uploadImage.utils";
+import sequelize from "sequelize";
 import { v4 as uuidv4 } from "uuid";
 import cloudinary from "@/config/cloudinary";
 import { extractPublicId } from "cloudinary-build-url";
@@ -22,16 +24,6 @@ class ArticleService {
 
   public getArticle = async (articleId: string): Promise<MappedArticleInterface> => {
     const article = await this.articles.findByPk(articleId, {
-      attributes: [
-        "id",
-        "slug",
-        "title",
-        "description",
-        "content",
-        "image",
-        "author_id",
-        "created_at",
-      ],
       include: [
         {
           model: this.users,
@@ -50,16 +42,6 @@ class ArticleService {
 
   public getArticleBySlug = async (slug: string): Promise<MappedArticleInterface> => {
     const article = await this.articles.findOne({
-      attributes: [
-        "id",
-        "slug",
-        "title",
-        "description",
-        "content",
-        "image",
-        "author_id",
-        "created_at",
-      ],
       include: [
         {
           model: this.users,
@@ -85,85 +67,30 @@ class ArticleService {
     filter?: string,
     order?: string,
   ): Promise<PaginatedArticleInterface> => {
-    let meta;
-    let articles;
-    const orderClause: sequelize.Order = [];
-    const whereClause = {};
-
-    if (order === "RANDOM") {
-      orderClause.push([sequelize.fn("RANDOM")] as unknown as OrderItem);
-    } else {
-      orderClause.push(["created_at", "DESC"]);
-    }
-
-    if (filter) {
-      whereClause[sequelize.Op.or] = [
+    const articles = await this.articles.findAndCountAll({
+      include: [
         {
-          title: {
-            [sequelize.Op.iLike]: `%${filter}%`,
-          },
+          model: this.users,
+          as: "author",
+          attributes: ["username", "profile"],
         },
-        {
-          description: {
-            [sequelize.Op.iLike]: `%${filter}%`,
-          },
-        },
-      ];
-    }
+      ],
+      order: order === "RANDOM" ? [sequelize.fn("RANDOM")] : [["created_at", "DESC"]],
+      where: filter
+        ? {
+            [sequelize.Op.or]: [
+              { title: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { description: { [sequelize.Op.iLike]: `%${filter}%` } },
+            ],
+          }
+        : {},
+      offset: !isNaN(offset) ? offset : undefined,
+      limit: !isNaN(limit) ? limit : undefined,
+    });
 
-    if (!isNaN(offset) && !isNaN(limit)) {
-      articles = await this.articles.findAndCountAll({
-        attributes: [
-          "id",
-          "slug",
-          "title",
-          "description",
-          "content",
-          "image",
-          "author_id",
-          "created_at",
-        ],
-        include: [
-          {
-            model: this.users,
-            as: "author",
-            attributes: ["username", "profile"],
-          },
-        ],
-        where: whereClause,
-        order: orderClause,
-        offset,
-        limit,
-      });
-
-      const { rows, count } = articles;
-      meta = metaBuilder(offset, limit, count);
-      return { rows: this.mappedArticles(rows), meta };
-    } else {
-      articles = await this.articles.findAll({
-        attributes: [
-          "id",
-          "slug",
-          "title",
-          "description",
-          "content",
-          "image",
-          "author_id",
-          "created_at",
-        ],
-        include: [
-          {
-            model: this.users,
-            as: "author",
-            attributes: ["username", "profile"],
-          },
-        ],
-        where: whereClause,
-        order: orderClause,
-      });
-
-      return { rows: this.mappedArticles(articles), meta };
-    }
+    const { rows, count } = articles;
+    const meta = !isNaN(offset) && !isNaN(limit) ? metaBuilder(offset, limit, count) : undefined;
+    return { rows: this.mappedArticles(rows), meta };
   };
 
   public createArticle = async (
@@ -171,35 +98,18 @@ class ArticleService {
     authorId: string,
     articleImageFile?: Buffer,
   ): Promise<ArticleInterface> => {
-    let article: ArticleInterface;
-    const slug = await generateSlug(this.articles, articleData.title);
+    articleData.slug = await generateSlug(this.articles, articleData.title);
 
     if (articleImageFile) {
-      article = await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            { public_id: `article_${uuidv4()}`, folder: "article" },
-            async (error, result) => {
-              if (error) {
-                reject(new HttpExceptionBadRequest(error.message));
-              } else {
-                resolve(
-                  this.articles.create({
-                    ...articleData,
-                    slug,
-                    author_id: authorId,
-                    image: result?.secure_url,
-                  }),
-                );
-              }
-            },
-          )
-          .end(articleImageFile);
-      });
-    } else {
-      article = await this.articles.create({ ...articleData, slug, author_id: authorId });
+      articleData.image = (
+        await uploadImageToCloudinary(
+          { public_id: `article_${uuidv4()}`, folder: "article" },
+          articleImageFile,
+        )
+      ).secure_url;
     }
 
+    const article = await this.articles.create({ ...articleData, author_id: authorId });
     return article;
   };
 
@@ -219,9 +129,8 @@ class ArticleService {
       throw new HttpExceptionForbidden("You are not the author of this article");
     }
 
-    if (articleData.title) {
-      const slug = await generateSlug(this.articles, articleData.title);
-      existingArticle.slug = slug;
+    if (articleData.title && articleData.title !== existingArticle.title) {
+      articleData.slug = await generateSlug(this.articles, articleData.title);
     }
 
     if (articleImageFile) {
@@ -234,39 +143,12 @@ class ArticleService {
         options = { public_id: `article_${uuidv4()}`, folder: "article" };
       }
 
-      await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(options, async (error, result) => {
-            if (error) {
-              reject(new HttpExceptionBadRequest(error.message));
-            } else {
-              const update = await this.articles.update(
-                {
-                  ...articleData,
-                  slug: existingArticle.slug,
-                  image: result?.secure_url,
-                },
-                {
-                  where: {
-                    id: articleId,
-                  },
-                },
-              );
-              resolve(update);
-            }
-          })
-          .end(articleImageFile);
-      });
+      articleData.image = (await uploadImageToCloudinary(options, articleImageFile)).secure_url;
     }
 
-    await this.articles.update(
-      { ...articleData, slug: existingArticle.slug },
-      {
-        where: {
-          id: articleId,
-        },
-      },
-    );
+    await this.articles.update(articleData, {
+      where: { id: articleId },
+    });
   };
 
   public deleteArticle = async (articleId: string, authorId: string): Promise<void> => {

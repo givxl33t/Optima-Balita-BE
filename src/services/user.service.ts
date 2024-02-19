@@ -9,10 +9,10 @@ import { UpdateUserDto } from "@/dtos/user.dto";
 import { metaBuilder } from "@/utils/pagination.utils";
 import { Op } from "sequelize";
 import PasswordHasher from "@/utils/passwordHasher.utils";
+import uploadImageToCloudinary from "@/utils/uploadImage.utils";
 import { UploadApiOptions } from "cloudinary";
 import { CLOUDINARY_CLOUD_NAME } from "@/utils/constant.utils";
 import { v4 as uuidv4 } from "uuid";
-import cloudinary from "@/config/cloudinary";
 import { extractPublicId } from "cloudinary-build-url";
 
 class UserService {
@@ -23,7 +23,6 @@ class UserService {
   public getUser = async (userId: string): Promise<UserInterface> => {
     const findUser = await this.users.findOne({
       where: { id: userId },
-      attributes: ["id", "username", "email", "profile", "created_at"],
       include: [
         {
           model: this.roles,
@@ -43,9 +42,6 @@ class UserService {
     currUserId: string,
     filter?: string,
   ): Promise<PaginatedUserInterface> => {
-    let meta;
-    let users;
-
     const whereClause = {
       id: {
         [Op.ne]: currUserId,
@@ -53,53 +49,28 @@ class UserService {
     };
     if (filter) {
       whereClause[Op.or] = [
-        {
-          username: {
-            [Op.iLike]: `%${filter}%`,
-          },
-        },
-        {
-          email: {
-            [Op.iLike]: `%${filter}%`,
-          },
-        },
+        { username: { [Op.iLike]: `%${filter}%` } },
+        { email: { [Op.iLike]: `%${filter}%` } },
       ];
     }
 
-    if (!isNaN(offset) && !isNaN(limit)) {
-      users = await this.users.findAndCountAll({
-        attributes: ["id", "username", "email", "profile", "created_at"],
-        include: [
-          {
-            model: this.roles,
-            as: "roles",
-            attributes: ["name"],
-          },
-        ],
-        where: whereClause,
-        order: [["created_at", "DESC"]],
-        offset,
-        limit,
-      });
+    const users = await this.users.findAndCountAll({
+      include: [
+        {
+          model: this.roles,
+          as: "roles",
+          attributes: ["name"],
+        },
+      ],
+      where: whereClause,
+      order: [["created_at", "DESC"]],
+      offset: !isNaN(offset) ? offset : undefined,
+      limit: !isNaN(limit) ? limit : undefined,
+    });
 
-      const { rows, count } = users;
-      meta = metaBuilder(offset, limit, count);
-      return { rows: this.mappedUsers(rows), meta };
-    } else {
-      users = await this.users.findAll({
-        attributes: ["id", "username", "email", "profile", "created_at"],
-        where: whereClause,
-        include: [
-          {
-            model: this.roles,
-            as: "roles",
-            attributes: ["name"],
-          },
-        ],
-        order: [["created_at", "DESC"]],
-      });
-      return { rows: this.mappedUsers(users), meta };
-    }
+    const { rows, count } = users;
+    const meta = !isNaN(offset) && !isNaN(limit) ? metaBuilder(offset, limit, count) : undefined;
+    return { rows: this.mappedUsers(rows), meta };
   };
 
   public updateUser = async (
@@ -142,31 +113,12 @@ class UserService {
         options = { public_id: `user_${uuidv4()}`, folder: "user" };
       }
 
-      await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(options, async (error, result) => {
-            if (error) {
-              reject(new HttpExceptionBadRequest(error.message));
-            } else {
-              const update = await this.users.update(
-                { ...userData, profile: result?.secure_url },
-                {
-                  where: { id: userId },
-                },
-              );
-              resolve(update);
-            }
-          })
-          .end(profileImageFile);
-      });
+      userData.profile = (await uploadImageToCloudinary(options, profileImageFile)).secure_url;
     }
 
-    await this.users.update(
-      { ...userData },
-      {
-        where: { id: userId },
-      },
-    );
+    await this.users.update(userData, {
+      where: { id: userId },
+    });
 
     if (userData.role_id) {
       const findRole = await this.roles.findOne({

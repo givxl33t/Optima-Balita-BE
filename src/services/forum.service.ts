@@ -33,118 +33,57 @@ class ForumService {
     filter?: string,
     commentOption?: string,
   ): Promise<PaginatedDiscussionInterface> => {
-    let meta;
-    let discussions;
-    const whereClause = {};
-
-    if (filter) {
-      whereClause["title"] = { [sequelize.Op.iLike]: `%${filter}%` };
-    }
-
-    if (!isNaN(offset) && !isNaN(limit)) {
-      discussions = await this.discussions.findAndCountAll({
-        attributes: ["id", "title", "post_content", "poster_id", "created_at"],
-        include: [
-          {
-            model: this.comments,
-            as: "comments",
-            attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
-            include: [
-              {
-                model: this.users,
-                as: "commenter",
-                attributes: ["id", "username", "profile"],
-                include: [
-                  {
-                    model: this.roles,
-                    as: "roles",
-                    attributes: ["name"],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            model: this.users,
-            as: "poster",
-            attributes: ["id", "username", "profile"],
-            include: [
-              {
-                model: this.roles,
-                as: "roles",
-                attributes: ["name"],
-              },
-            ],
-          },
-          {
-            model: this.users,
-            through: {
-              attributes: [],
+    const discussions = await this.discussions.findAndCountAll({
+      include: [
+        {
+          model: this.comments,
+          as: "comments",
+          include: [
+            {
+              model: this.users,
+              as: "commenter",
+              attributes: ["id", "username", "profile"],
+              include: [
+                {
+                  model: this.roles,
+                  as: "roles",
+                  attributes: ["name"],
+                },
+              ],
             },
-            as: "likes",
-            attributes: ["id", "username"],
-          },
-        ],
-        where: whereClause,
-        order: [["created_at", "DESC"]],
-        offset,
-        limit,
-        distinct: true,
-      });
-
-      const { rows, count } = discussions;
-      meta = metaBuilder(offset, limit, count);
-      return { rows: this.mappedDiscussions(rows, userId, commentOption), meta };
-    } else {
-      discussions = await this.discussions.findAll({
-        attributes: ["id", "title", "post_content", "poster_id", "created_at"],
-        include: [
-          {
-            model: this.comments,
-            as: "comments",
-            attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
-            include: [
-              {
-                model: this.users,
-                as: "commenter",
-                attributes: ["id", "username", "profile"],
-                include: [
-                  {
-                    model: this.roles,
-                    as: "roles",
-                    attributes: ["name"],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            model: this.users,
-            as: "poster",
-            attributes: ["id", "username", "profile"],
-            include: [
-              {
-                model: this.roles,
-                as: "roles",
-                attributes: ["name"],
-              },
-            ],
-          },
-          {
-            model: this.users,
-            through: {
-              attributes: [],
+          ],
+        },
+        {
+          model: this.users,
+          as: "poster",
+          attributes: ["id", "username", "profile"],
+          include: [
+            {
+              model: this.roles,
+              as: "roles",
+              attributes: ["name"],
             },
-            as: "likes",
-            attributes: ["id", "username"],
+          ],
+        },
+        {
+          model: this.users,
+          through: {
+            attributes: [],
           },
-        ],
-        order: [["created_at", "DESC"]],
-        where: whereClause,
-      });
+          as: "likes",
+          attributes: ["id", "username"],
+        },
+      ],
+      where: filter ? { title: { [sequelize.Op.iLike]: `%${filter}%` } } : {},
+      order: [["created_at", "DESC"]],
+      offset: !isNaN(offset) ? offset : undefined,
+      limit: !isNaN(limit) ? limit : undefined,
+      distinct: true,
+    });
 
-      return { rows: this.mappedDiscussions(discussions, userId, commentOption), meta };
-    }
+    const { rows, count } = discussions;
+    const meta = !isNaN(offset) && !isNaN(limit) ? metaBuilder(offset, limit, count) : undefined;
+    return { rows: this.mappedDiscussions(rows, userId, commentOption), meta };
   };
 
   public getDiscussion = async (
@@ -152,12 +91,10 @@ class ForumService {
     userId: string,
   ): Promise<MappedDiscussionInterface> => {
     const discussion = await this.discussions.findByPk(discussionId, {
-      attributes: ["id", "title", "post_content", "poster_id", "created_at"],
       include: [
         {
           model: this.comments,
           as: "comments",
-          attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
           include: [
             {
               model: this.users,
@@ -243,65 +180,34 @@ class ForumService {
     offset: number,
     limit: number,
   ): Promise<PaginatedCommentInterface> => {
-    let meta;
-    let comments;
-    const whereClause = {
-      discussion_id: discussionId,
-    };
+    const comments = await this.comments.findAndCountAll({
+      include: [
+        {
+          model: this.users,
+          as: "commenter",
+          attributes: ["id", "username", "profile"],
+          include: [
+            {
+              model: this.roles,
+              as: "roles",
+              attributes: ["name"],
+            },
+          ],
+        },
+      ],
+      where: { discussion_id: discussionId },
+      offset: !isNaN(offset) ? offset : undefined,
+      limit: !isNaN(limit) ? limit : undefined,
+      distinct: true,
+    });
 
-    if (!isNaN(offset) && !isNaN(limit)) {
-      comments = await this.comments.findAndCountAll({
-        attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
-        include: [
-          {
-            model: this.users,
-            as: "commenter",
-            attributes: ["id", "username", "profile"],
-            include: [
-              {
-                model: this.roles,
-                as: "roles",
-                attributes: ["name"],
-              },
-            ],
-          },
-        ],
-        where: whereClause,
-        offset,
-        limit,
-        distinct: true,
-      });
-
-      const { rows, count } = comments;
-      meta = metaBuilder(offset, limit, count);
-      return { rows: this.mappedComments(rows), meta };
-    } else {
-      comments = await this.comments.findAll({
-        attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
-        include: [
-          {
-            model: this.users,
-            as: "commenter",
-            attributes: ["id", "username", "profile"],
-            include: [
-              {
-                model: this.roles,
-                as: "roles",
-                attributes: ["name"],
-              },
-            ],
-          },
-        ],
-        where: whereClause,
-      });
-
-      return { rows: this.mappedComments(comments), meta };
-    }
+    const { rows, count } = comments;
+    const meta = !isNaN(offset) && !isNaN(limit) ? metaBuilder(offset, limit, count) : undefined;
+    return { rows: this.mappedComments(rows), meta };
   };
 
   public getComment = async (commentId: string): Promise<MappedCommentInterface> => {
     const comment = await this.comments.findByPk(commentId, {
-      attributes: ["id", "comment_content", "commenter_id", "discussion_id", "created_at"],
       include: [
         {
           model: this.users,
@@ -318,7 +224,6 @@ class ForumService {
         {
           model: this.discussions,
           as: "discussion",
-          attributes: ["id", "title", "post_content", "poster_id", "created_at"],
           include: [
             {
               model: this.users,

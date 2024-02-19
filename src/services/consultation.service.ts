@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import DB from "@/config/database";
 import sequelize from "sequelize";
 import { metaBuilder } from "@/utils/pagination.utils";
@@ -17,18 +18,10 @@ class ConsultationService {
 
   public getConsultant = async (consultantId: string): Promise<MappedConsultantInterface> => {
     const consultant = await this.consultants.findByPk(consultantId, {
-      attributes: [
-        "id",
-        "consultant_description",
-        "consultant_phone",
-        "consultant_id",
-        "created_at",
-      ],
       include: [
         {
           model: this.users,
           as: "consultant",
-          attributes: ["id", "username", "email", "profile", "created_at"],
           include: [
             {
               model: this.roles,
@@ -50,72 +43,29 @@ class ConsultationService {
     limit: number,
     filter?: string,
   ): Promise<PaginatedConsultantInterface> => {
-    let meta;
-    let consultants;
-
-    const whereClause = {};
-
-    if (filter) {
-      whereClause[sequelize.Op.or] = [
+    const consultants = await this.consultants.findAndCountAll({
+      include: [
         {
-          "$consultant.username$": {
-            [sequelize.Op.iLike]: `%${filter}%`,
-          },
+          model: this.users,
+          as: "consultant",
         },
-        {
-          consultant_description: {
-            [sequelize.Op.iLike]: `%${filter}%`,
-          },
-        },
-      ];
-    }
+      ],
+      order: [["created_at", "DESC"]],
+      where: filter
+        ? {
+            [sequelize.Op.or]: [
+              { consultant_description: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { "$consultant.username$": { [sequelize.Op.iLike]: `%${filter}%` } },
+            ],
+          }
+        : {},
+      offset: !isNaN(offset) ? offset : undefined,
+      limit: !isNaN(limit) ? limit : undefined,
+    });
 
-    if (!isNaN(offset) && !isNaN(limit)) {
-      consultants = await this.consultants.findAndCountAll({
-        attributes: [
-          "id",
-          "consultant_description",
-          "consultant_phone",
-          "consultant_id",
-          "created_at",
-        ],
-        where: whereClause,
-        include: [
-          {
-            model: this.users,
-            as: "consultant",
-            attributes: ["id", "username", "email", "profile"],
-          },
-        ],
-        offset,
-        limit,
-        order: [["created_at", "DESC"]],
-      });
-
-      const { rows, count } = consultants;
-      meta = metaBuilder(offset, limit, count);
-      return { rows: this.mappedConsultants(rows), meta };
-    } else {
-      consultants = await this.consultants.findAll({
-        attributes: [
-          "id",
-          "consultant_description",
-          "consultant_phone",
-          "consultant_id",
-          "created_at",
-        ],
-        where: whereClause,
-        include: [
-          {
-            model: this.users,
-            as: "consultant",
-            attributes: ["id", "username", "email", "profile"],
-          },
-        ],
-        order: [["created_at", "DESC"]],
-      });
-      return { rows: this.mappedConsultants(consultants), meta };
-    }
+    const { rows, count } = consultants;
+    const meta = !isNaN(offset) && !isNaN(limit) ? metaBuilder(offset, limit, count) : undefined;
+    return { rows: this.mappedConsultants(rows), meta };
   };
 
   public createConsultant = async (

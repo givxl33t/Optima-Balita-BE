@@ -47,11 +47,11 @@ export interface MappedDiscussionInterface {
 }
 
 export interface PaginatedDiscussionInterface {
-  meta: MetaInterface;
+  meta: MetaInterface | undefined;
   rows: MappedDiscussionInterface[];
 }
 
 export interface PaginatedCommentInterface {
-  meta: MetaInterface;
+  meta: MetaInterface | undefined;
   rows: MappedCommentInterface[];
 }
