@@ -21,6 +21,6 @@ export interface MappedConsultantInterface {
 }
 
 export interface PaginatedConsultantInterface {
-  meta: MetaInterface;
+  meta: MetaInterface | undefined;
   rows: MappedConsultantInterface[];
 }

@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import DB from "@/config/database";
 import {
   CreateNutritionHistoryDto,
@@ -30,105 +31,35 @@ class NutritionService {
     limit: number,
     filter?: string,
   ): Promise<PaginatedChildrenInterface> => {
-    let meta;
-    let nutritionHistories;
-    const whereClause = filter ? { child_name: { [sequelize.Op.iLike]: `%${filter}%` } } : {};
+    const nutritionHistories = await this.nutritionHistories.findAll({
+      include: [
+        {
+          model: this.users,
+          as: "creator",
+          attributes: ["id", "username", "profile"],
+        },
+      ],
+      where: filter ? { child_name: { [sequelize.Op.iLike]: `%${filter}%` } } : {},
+      order: [["created_at", "DESC"]],
+    });
 
-    if (!isNaN(offset) && !isNaN(limit)) {
-      nutritionHistories = await this.nutritionHistories.findAll({
-        attributes: [
-          "id",
-          "child_id",
-          "child_name",
-          "child_nik",
-          "child_village",
-          "date_of_birth",
-          "age_text",
-          "height",
-          "weight",
-          "gender",
-          "bmi",
-          "height_category",
-          "mass_category",
-          "weight_category",
-          "creator_id",
-          "created_at",
-        ],
-        include: [
-          {
-            model: this.users,
-            as: "creator",
-            attributes: ["id", "username", "profile"],
-          },
-        ],
-        where: whereClause,
-        order: [["created_at", "DESC"]],
-      });
+    const mappedRows = this.mappedChildrens(nutritionHistories);
 
-      const mappedRows = this.mappedChildrens(nutritionHistories);
+    const meta =
+      !isNaN(offset) && !isNaN(limit) ? metaBuilder(offset, limit, mappedRows.length) : undefined;
 
-      // Manual pagination
-      const startIndex = offset;
-      const endIndex = offset + limit;
-      const paginatedRows = mappedRows.slice(startIndex, endIndex);
-
-      meta = metaBuilder(offset, limit, mappedRows.length);
-      return { rows: paginatedRows, meta };
-    } else {
-      nutritionHistories = await this.nutritionHistories.findAll({
-        attributes: [
-          "id",
-          "child_id",
-          "child_name",
-          "child_nik",
-          "child_village",
-          "date_of_birth",
-          "age_text",
-          "height",
-          "weight",
-          "gender",
-          "bmi",
-          "height_category",
-          "mass_category",
-          "weight_category",
-          "creator_id",
-          "created_at",
-        ],
-        include: [
-          {
-            model: this.users,
-            as: "creator",
-            attributes: ["id", "username", "profile"],
-          },
-        ],
-        where: whereClause,
-        order: [["created_at", "DESC"]],
-      });
-
-      return { rows: this.mappedChildrens(nutritionHistories), meta };
-    }
+    // Manual pagination
+    const startIndex = !isNaN(offset) && !isNaN(limit) ? offset : null;
+    const endIndex = !isNaN(offset) && !isNaN(limit) ? offset + limit : null;
+    const rows =
+      !isNaN(offset) && !isNaN(limit)
+        ? mappedRows.slice(startIndex as number, endIndex as number)
+        : mappedRows;
+    return { rows, meta };
   };
 
   public getChildren = async (childId: string): Promise<MappedChildrenInterface> => {
     const children = await this.nutritionHistories.findAll({
-      attributes: [
-        "id",
-        "child_id",
-        "child_name",
-        "child_nik",
-        "child_village",
-        "date_of_birth",
-        "age_text",
-        "height",
-        "weight",
-        "gender",
-        "bmi",
-        "height_category",
-        "mass_category",
-        "weight_category",
-        "creator_id",
-        "created_at",
-      ],
       include: [
         {
           model: this.users,
@@ -184,24 +115,6 @@ class NutritionService {
 
   public getUserNutritionHistories = async (userId): Promise<NutritionHistoryInterface[]> => {
     const nutritionHistories = await this.nutritionHistories.findAll({
-      attributes: [
-        "id",
-        "child_id",
-        "child_name",
-        "child_nik",
-        "child_village",
-        "date_of_birth",
-        "age_text",
-        "height",
-        "weight",
-        "gender",
-        "bmi",
-        "height_category",
-        "mass_category",
-        "weight_category",
-        "creator_id",
-        "created_at",
-      ],
       where: { creator_id: userId },
     });
 
@@ -213,80 +126,24 @@ class NutritionService {
     limit: number,
     filter?: string,
   ): Promise<PaginatedNutritionHistoriesInterface> => {
-    let meta;
-    let nutritionHistories;
+    const nutritionHistories = await this.nutritionHistories.findAndCountAll({
+      where: filter
+        ? {
+            [sequelize.Op.or]: [
+              { height_category: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { mass_category: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { weight_category: { [sequelize.Op.iLike]: `%${filter}%` } },
+            ],
+          }
+        : {},
+      offset: !isNaN(offset) ? offset : undefined,
+      limit: !isNaN(limit) ? limit : undefined,
+      order: [["created_at", "DESC"]],
+    });
 
-    const whereClause = {};
-
-    if (filter) {
-      whereClause[sequelize.Op.or] = [
-        {
-          height_category: {
-            [sequelize.Op.iLike]: `%${filter}%`,
-          },
-        },
-        {
-          weight_category: {
-            [sequelize.Op.iLike]: `%${filter}%`,
-          },
-        },
-        {
-          mass_category: {
-            [sequelize.Op.iLike]: `%${filter}%`,
-          },
-        },
-      ];
-    }
-
-    if (!isNaN(offset) && !isNaN(limit)) {
-      nutritionHistories = await this.nutritionHistories.findAndCountAll({
-        attributes: [
-          "id",
-          "child_id",
-          "child_name",
-          "age_text",
-          "height",
-          "weight",
-          "gender",
-          "bmi",
-          "height_category",
-          "mass_category",
-          "weight_category",
-          "creator_id",
-          "created_at",
-        ],
-        where: whereClause,
-        offset,
-        limit,
-        order: [["created_at", "DESC"]],
-      });
-
-      const { rows, count } = nutritionHistories;
-      meta = metaBuilder(offset, limit, count);
-      return { rows, meta };
-    } else {
-      nutritionHistories = await this.nutritionHistories.findAll({
-        attributes: [
-          "id",
-          "child_id",
-          "child_name",
-          "age_text",
-          "height",
-          "weight",
-          "gender",
-          "bmi",
-          "height_category",
-          "mass_category",
-          "weight_category",
-          "creator_id",
-          "created_at",
-        ],
-        where: whereClause,
-        order: [["created_at", "DESC"]],
-      });
-
-      return { rows: nutritionHistories, meta };
-    }
+    const { rows, count } = nutritionHistories;
+    const meta = !isNaN(offset) && !isNaN(limit) ? metaBuilder(offset, limit, count) : undefined;
+    return { rows, meta };
   };
 
   public getNutritionHistory = async (

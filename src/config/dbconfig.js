@@ -36,7 +36,7 @@ module.exports = {
       deletedAt: "deleted_at",
       defaultScope: {
         attributes: {
-          exclude: ["created_at", "updated_at", "deleted_at"],
+          exclude: ["deleted_at"],
         },
       },
     },
@@ -64,7 +64,7 @@ module.exports = {
       deletedAt: "deleted_at",
       defaultScope: {
         attributes: {
-          exclude: ["created_at", "updated_at", "deleted_at"],
+          exclude: ["deleted_at"],
         },
       },
     },
@@ -92,7 +92,7 @@ module.exports = {
       deletedAt: "deleted_at",
       defaultScope: {
         attributes: {
-          exclude: ["created_at", "updated_at", "deleted_at"],
+          exclude: ["deleted_at"],
         },
       },
     },

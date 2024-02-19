@@ -30,6 +30,6 @@ export interface TokenInterface {
 }
 
 export interface PaginatedUserInterface {
-  meta: MetaInterface;
+  meta: MetaInterface | undefined;
   rows: MappedUserInterface[];
 }

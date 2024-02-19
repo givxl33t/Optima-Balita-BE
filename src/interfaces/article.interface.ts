@@ -28,6 +28,6 @@ export interface MappedArticleInterface {
 }
 
 export interface PaginatedArticleInterface {
-  meta: MetaInterface;
+  meta: MetaInterface | undefined;
   rows: MappedArticleInterface[];
 }

@@ -23,7 +23,7 @@ export interface NutritionHistoryInterface {
 }
 
 export interface PaginatedNutritionHistoriesInterface {
-  meta: MetaInterface;
+  meta: MetaInterface | undefined;
   rows: NutritionHistoryInterface[];
 }
 
@@ -67,6 +67,6 @@ export interface MappedChildInterface {
 }
 
 export interface PaginatedChildrenInterface {
-  meta: MetaInterface;
+  meta: MetaInterface | undefined;
   rows: MappedChildrenInterface[];
 }

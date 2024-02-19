@@ -34,6 +34,10 @@ export class CreateArticleDto {
   @IsOptional()
   @Equals(undefined, { message: "Image Required" })
   public image?: string;
+
+  @IsOptional()
+  @Equals(undefined, { message: "Image Required" })
+  public slug?: string;
 }
 
 export class ArticleIdParamDto {
