@@ -42,6 +42,23 @@ class ConsultationService {
     limit: number,
     filter?: string,
   ): Promise<PaginatedConsultantInterface> => {
+    const whereClause = filter
+      ? {
+          [sequelize.Op.or]: [
+            {
+              "$consultant.username$": {
+                [sequelize.Op.iLike]: `%${filter}%`,
+              },
+            },
+            {
+              consultant_description: {
+                [sequelize.Op.iLike]: `%${filter}%`,
+              },
+            },
+          ],
+        }
+      : {};
+
     const consultants = await this.consultants.findAndCountAll({
       include: [
         {
@@ -50,22 +67,7 @@ class ConsultationService {
         },
       ],
       order: [["created_at", "DESC"]],
-      where: filter
-        ? {
-            [sequelize.Op.or]: [
-              {
-                "$consultant.username$": {
-                  [sequelize.Op.iLike]: `%${filter}%`,
-                },
-              },
-              {
-                consultant_description: {
-                  [sequelize.Op.iLike]: `%${filter}%`,
-                },
-              },
-            ],
-          }
-        : {},
+      where: whereClause,
       offset: !isNaN(offset) ? offset : undefined,
       limit: !isNaN(limit) ? limit : undefined,
     });

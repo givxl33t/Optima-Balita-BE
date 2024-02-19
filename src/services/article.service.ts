@@ -66,6 +66,15 @@ class ArticleService {
     filter?: string,
     order?: string,
   ): Promise<PaginatedArticleInterface> => {
+    const whereClause = filter
+      ? {
+          [sequelize.Op.or]: [
+            { title: { [sequelize.Op.iLike]: `%${filter}%` } },
+            { description: { [sequelize.Op.iLike]: `%${filter}%` } },
+          ],
+        }
+      : {};
+
     const articles = await this.articles.findAndCountAll({
       include: [
         {
@@ -75,14 +84,7 @@ class ArticleService {
         },
       ],
       order: order === "RANDOM" ? [sequelize.fn("RANDOM")] : [["created_at", "DESC"]],
-      where: filter
-        ? {
-            [sequelize.Op.or]: [
-              { title: { [sequelize.Op.iLike]: `%${filter}%` } },
-              { description: { [sequelize.Op.iLike]: `%${filter}%` } },
-            ],
-          }
-        : {},
+      where: whereClause,
       offset: !isNaN(offset) ? offset : undefined,
       limit: !isNaN(limit) ? limit : undefined,
     });
