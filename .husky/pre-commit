@@ -3,4 +3,3 @@
 
 yarn pretty-quick --staged --pattern 'src/**/*.ts'
 git add -A .
-yarn build

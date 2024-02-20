@@ -39,7 +39,14 @@ class NutritionService {
           attributes: ["id", "username", "profile"],
         },
       ],
-      where: filter ? { child_name: { [sequelize.Op.iLike]: `%${filter}%` } } : {},
+      where: filter
+        ? {
+            [sequelize.Op.or]: [
+              { child_name: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { child_nik: { [sequelize.Op.iLike]: `%${filter}%` } },
+            ],
+          }
+        : {},
       order: [["created_at", "DESC"]],
     });
 
