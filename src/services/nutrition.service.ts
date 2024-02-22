@@ -44,6 +44,7 @@ class NutritionService {
             [sequelize.Op.or]: [
               { child_name: { [sequelize.Op.iLike]: `%${filter}%` } },
               { child_nik: { [sequelize.Op.iLike]: `%${filter}%` } },
+              { child_village: { [sequelize.Op.iLike]: `%${filter}%` } },
             ],
           }
         : {},
